@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import {
   CheckCircle2,
@@ -21,15 +22,18 @@ type AuthStatus =
   | "scanning"
   | "success"
   | "fail"
-  | "denied";
+  | "denied"
+  | "verifying";
 
 export default function AuthPage() {
+  const router = useRouter();
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState("Student");
   const [scanProgress, setScanProgress] = useState(0);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showVerifiedAnimation, setShowVerifiedAnimation] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const scanFrameRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -141,7 +145,7 @@ export default function AuthPage() {
     }
   }
 
-  function handleScanSuccess(barcodeText: string) {
+  function handleScanSuccess(_barcodeText: string) {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
     }
@@ -150,16 +154,22 @@ export default function AuthPage() {
     }
     codeReaderRef.current?.reset();
 
-    setStatus("success");
+    setStatus("verifying");
     setScanProgress(100);
-    setMessage("Verified — Welcome!");
-    setUserName("Student"); // Replace with actual name from backend
+    setMessage("Verifying...");
 
-    // Auto-proceed after delay
+    // Show verification animation
     setTimeout(() => {
-      // Navigate to next step (replace with actual navigation)
-      console.log("Authenticated with:", barcodeText);
-    }, 2000);
+      setShowVerifiedAnimation(true);
+      setStatus("success");
+      setMessage("Verified — Welcome!");
+      setUserName("Student"); // Replace with actual name from backend
+
+      // Navigate to dashboard after animation
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2500);
+    }, 800);
   }
 
   function handleScanFail() {
@@ -189,6 +199,7 @@ export default function AuthPage() {
     setMessage("");
     setScanProgress(0);
     setUserName("");
+    setShowVerifiedAnimation(false);
   }
 
   function handlePhoneOTP() {
@@ -197,10 +208,108 @@ export default function AuthPage() {
     console.log("Navigate to Phone OTP");
   }
 
+  function handleDevBypass() {
+    setShowVerifiedAnimation(true);
+    setStatus("success");
+    setMessage("Verified — Welcome!");
+    setUserName("Developer");
+    
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 2500);
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="orbital-gradient" aria-hidden />
       <div className="grid-overlay" aria-hidden />
+
+      {/* Hidden Dev Bypass Button - Triple click bottom right corner */}
+      <button
+        onClick={handleDevBypass}
+        className="fixed bottom-4 right-4 z-50 h-12 w-12 rounded-full bg-transparent opacity-0 transition-opacity hover:opacity-100"
+        aria-label="Developer bypass"
+        title="Dev Bypass (Triple click)"
+      />
+
+      {/* Verified Animation Overlay */}
+      <AnimatePresence>
+        {showVerifiedAnimation && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="flex flex-col items-center gap-6 text-center"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <motion.div
+                className="relative flex h-32 w-32 items-center justify-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <div className="absolute inset-0 rounded-full bg-green-500/20 blur-2xl" />
+                <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-2xl shadow-green-500/50">
+                  <CheckCircle2 className="h-16 w-16 text-white" />
+                </div>
+                {!prefersReducedMotion && (
+                  <motion.div
+                    className="absolute inset-0"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    {[...Array(16)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute left-1/2 top-1/2 h-3 w-3 rounded-full bg-green-400"
+                        initial={{
+                          x: 0,
+                          y: 0,
+                          opacity: 1,
+                          scale: 1,
+                        }}
+                        animate={{
+                          x: Math.cos((i * Math.PI * 2) / 16) * 120,
+                          y: Math.sin((i * Math.PI * 2) / 16) * 120,
+                          opacity: 0,
+                          scale: 0,
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          delay: i * 0.05,
+                          repeat: Infinity,
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </motion.div>
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <h2 className="text-3xl font-semibold text-white">
+                  Verification Successful!
+                </h2>
+                <p className="mt-2 text-lg text-slate-300">
+                  Welcome, {userName}!
+                </p>
+                <p className="mt-4 text-sm text-slate-400">
+                  Redirecting to dashboard...
+                </p>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
@@ -284,7 +393,7 @@ export default function AuthPage() {
                   )}
 
                   {/* Video Feed */}
-                  {(status === "scanning" || status === "requesting") && (
+                  {(status === "scanning" || status === "requesting" || status === "verifying") && (
                     <>
                       <video
                         ref={videoRef}
@@ -294,36 +403,38 @@ export default function AuthPage() {
                         autoPlay
                       />
                       {/* Scanning Overlay */}
-                      <div
-                        ref={scanFrameRef}
-                        className="absolute inset-4 flex items-center justify-center"
-                      >
-                        <div className="relative h-[60%] w-[86%] rounded-lg border-4 border-white/80">
-                          {/* Red Scanning Bar */}
-                          {!prefersReducedMotion && status === "scanning" && (
-                            <motion.div
-                              className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-lg shadow-red-500/50"
-                              animate={{
-                                top: ["10%", "90%", "10%"],
-                                opacity: [0.4, 1, 0.4],
-                              }}
-                              transition={{
-                                duration: 0.7,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                              }}
-                            />
-                          )}
-                          {/* Guide Text */}
-                          <div className="absolute inset-0 flex items-end justify-center pb-2">
-                            <span className="rounded bg-white/90 px-3 py-1 text-xs font-medium text-slate-900 shadow-lg">
-                              Align barcode here
-                            </span>
+                      {status === "scanning" && (
+                        <div
+                          ref={scanFrameRef}
+                          className="absolute inset-4 flex items-center justify-center"
+                        >
+                          <div className="relative h-[60%] w-[86%] rounded-lg border-4 border-white/80">
+                            {/* Red Scanning Bar */}
+                            {!prefersReducedMotion && (
+                              <motion.div
+                                className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-lg shadow-red-500/50"
+                                animate={{
+                                  top: ["10%", "90%", "10%"],
+                                  opacity: [0.4, 1, 0.4],
+                                }}
+                                transition={{
+                                  duration: 0.7,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }}
+                              />
+                            )}
+                            {/* Guide Text */}
+                            <div className="absolute inset-0 flex items-end justify-center pb-2">
+                              <span className="rounded bg-white/90 px-3 py-1 text-xs font-medium text-slate-900 shadow-lg">
+                                Align barcode here
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                       {/* Progress Indicator */}
-                      {status === "scanning" && scanProgress > 0 && (
+                      {(status === "scanning" || status === "verifying") && scanProgress > 0 && (
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
                           <div className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 backdrop-blur">
                             <div className="h-2 w-24 overflow-hidden rounded-full bg-white/20">
@@ -335,7 +446,7 @@ export default function AuthPage() {
                               />
                             </div>
                             <span className="text-xs text-white">
-                              Scanning... {Math.round(scanProgress / 10)}s
+                              {status === "verifying" ? "Verifying..." : `Scanning... ${Math.round(scanProgress / 10)}s`}
                             </span>
                           </div>
                         </div>
@@ -344,7 +455,7 @@ export default function AuthPage() {
                   )}
 
                   {/* Success State */}
-                  {status === "success" && (
+                  {status === "success" && !showVerifiedAnimation && (
                     <motion.div
                       className="flex h-full flex-col items-center justify-center gap-4 p-8 text-green-400"
                       initial={{ scale: 0.85, opacity: 0 }}
@@ -496,15 +607,15 @@ export default function AuthPage() {
               <div className="space-y-3">
                 <motion.button
                   onClick={startScan}
-                  disabled={status === "scanning" || status === "requesting"}
+                  disabled={status === "scanning" || status === "requesting" || status === "verifying"}
                   className="group relative w-full overflow-hidden rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-sky-500/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   whileHover={
-                    status !== "scanning" && status !== "requesting"
+                    status !== "scanning" && status !== "requesting" && status !== "verifying"
                       ? { scale: 1.02 }
                       : {}
                   }
                   whileTap={
-                    status !== "scanning" && status !== "requesting"
+                    status !== "scanning" && status !== "requesting" && status !== "verifying"
                       ? { scale: 0.98 }
                       : {}
                   }
@@ -522,6 +633,19 @@ export default function AuthPage() {
                           }}
                         />
                         Scanning...
+                      </>
+                    ) : status === "verifying" ? (
+                      <>
+                        <motion.div
+                          className="h-4 w-4 rounded-full border-2 border-white border-t-transparent"
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        />
+                        Verifying...
                       </>
                     ) : (
                       <>
@@ -563,7 +687,7 @@ export default function AuthPage() {
               )}
 
               {/* Try Again / Actions */}
-              {status !== "idle" && status !== "scanning" && (
+              {status !== "idle" && status !== "scanning" && status !== "verifying" && status !== "success" && (
                 <motion.div
                   className="mt-4 flex gap-3"
                   initial={{ opacity: 0 }}

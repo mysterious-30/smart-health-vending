@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import {
   Bandage,
   Bot,
@@ -122,19 +121,17 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/auth">
-              <motion.button
-                className="group relative overflow-hidden rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500 px-8 py-3 text-base font-semibold shadow-lg shadow-sky-500/40 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  Tap &quot;Get Started&quot;
-                  <HeartPulse className="h-4 w-4 transition group-hover:scale-110" />
-                </span>
-                <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
-              </motion.button>
-            </Link>
+            <motion.button
+              className="group relative overflow-hidden rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500 px-8 py-3 text-base font-semibold shadow-lg shadow-sky-500/40 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Tap “Get Started”
+                <HeartPulse className="h-4 w-4 transition group-hover:scale-110" />
+              </span>
+              <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
+            </motion.button>
 
             <motion.button
               className="rounded-full border border-white/30 px-6 py-3 text-base font-medium text-slate-100 transition hover:border-cyan-300 hover:text-white"
