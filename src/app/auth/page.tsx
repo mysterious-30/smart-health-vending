@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   XCircle,
   Camera,
-  Phone,
   HelpCircle,
   ArrowLeft,
   Shield,
@@ -139,7 +138,7 @@ export default function AuthPage() {
       console.error("Camera error:", err);
       setStatus("denied");
       setMessage(
-        "Camera access blocked. Allow camera in browser settings or use Phone OTP."
+        "Camera access blocked. Allow camera in browser settings or contact the campus admin."
       );
       setScanProgress(0);
     }
@@ -183,7 +182,7 @@ export default function AuthPage() {
 
     setStatus("fail");
     setScanProgress(0);
-    setMessage("Scan failed. Try again or choose Phone OTP.");
+    setMessage("Scan failed. Try again or contact the campus admin for assistance.");
   }
 
   function stopAndReset() {
@@ -200,12 +199,6 @@ export default function AuthPage() {
     setScanProgress(0);
     setUserName("");
     setShowVerifiedAnimation(false);
-  }
-
-  function handlePhoneOTP() {
-    stopAndReset();
-    // Navigate to phone OTP flow (implement separately)
-    console.log("Navigate to Phone OTP");
   }
 
   function handleDevBypass() {
@@ -534,7 +527,7 @@ export default function AuthPage() {
                       <div className="text-center">
                         <div className="font-medium">Scan failed</div>
                         <p className="mt-1 text-sm text-red-300">
-                          Try cleaning the card, rotating it, or use Phone OTP
+                          Try cleaning the card, rotating it, or ask the campus admin for help
                         </p>
                       </div>
                     </motion.div>
@@ -551,8 +544,7 @@ export default function AuthPage() {
                         <AlertCircle className="h-10 w-10" />
                       </div>
                       <div className="text-center text-sm">
-                        Camera access blocked. Allow camera in settings or use
-                        Phone OTP.
+                        Camera access blocked. Allow camera in settings or speak with the campus admin.
                       </div>
                     </motion.div>
                   )}
@@ -595,8 +587,7 @@ export default function AuthPage() {
                     ambient light, or try rotating the card 90°.
                   </li>
                   <li>
-                    • Don&apos;t have your card? Use &quot;Phone OTP&quot; or contact the
-                    campus admin.
+                    • Don&apos;t have your card? Contact the campus admin for verification support.
                   </li>
                   <li>
                     • We only store a masked ID token for audit — we don&apos;t save
@@ -657,16 +648,6 @@ export default function AuthPage() {
                     )}
                   </span>
                   <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
-                </motion.button>
-
-                <motion.button
-                  onClick={handlePhoneOTP}
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-6 py-4 text-base font-medium text-slate-100 transition hover:border-cyan-300 hover:bg-white/10 hover:text-white"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Phone className="h-5 w-5" />
-                  Use Phone OTP
                 </motion.button>
 
                 <button
@@ -797,7 +778,7 @@ export default function AuthPage() {
                   <li>• Ensure good lighting in the room</li>
                   <li>• Rotate the card 90 degrees and try again</li>
                   <li>• Hold the card steady for 3-5 seconds</li>
-                  <li>• Use Phone OTP as an alternative</li>
+                  <li>• Reach out to the campus admin if you need manual verification</li>
                 </ul>
                 <p className="pt-2 text-xs text-slate-400">
                   Still having issues? Contact campus admin for assistance.

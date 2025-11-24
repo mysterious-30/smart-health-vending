@@ -26,7 +26,7 @@ import {
 const actions = [
   {
     title: "Authenticate Yourself",
-    description: "Verify via Aadhaar, Student ID, or a secure phone OTP.",
+    description: "Verify via Aadhaar or Student ID for secure access.",
     icon: Fingerprint,
     accent: "from-sky-400/80 to-cyan-300/60",
   },
@@ -85,7 +85,7 @@ const previewSteps = [
   {
     id: 1,
     title: "Authenticate Yourself",
-    description: "Scan your Student ID barcode or use Phone OTP to verify your identity securely.",
+    description: "Scan your Student ID barcode to verify your identity securely.",
     icon: Fingerprint,
     details: "Quick verification process that takes less than 3 seconds. Your identity is protected with masked tokens.",
   },
