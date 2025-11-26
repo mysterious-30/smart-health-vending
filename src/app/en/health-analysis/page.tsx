@@ -7,17 +7,14 @@ import {
   Upload,
   X,
   AlertTriangle,
-  CheckCircle2,
   Sparkles,
   Shield,
   ArrowLeft,
   Loader2,
   Stethoscope,
-  Bandage,
-  Pill,
-  Activity,
 } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 type SeverityLevel = "Low" | "Moderate" | "High";
 type Category = "Cut" | "Rash" | "Burn" | "Swelling" | "Skin Irritation" | "Fever" | "Sprain" | "Other";
@@ -31,13 +28,14 @@ interface AISuggestion {
 }
 
 const exampleDescriptions = [
-  "Fever since morning, slight headache",
-  "Small cut on finger while using cutter",
-  "Red patches after touching chemicals",
-  "Mild ankle sprain during sports",
+  "analysis.desc.ex.1",
+  "analysis.desc.ex.2",
+  "analysis.desc.ex.3",
+  "analysis.desc.ex.4",
 ];
 
 export default function HealthAnalysisPage() {
+  const { t } = useLanguage();
   const [image, setImage] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -48,6 +46,7 @@ export default function HealthAnalysisPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [validationError, setValidationError] = useState<{ needsImage: boolean; needsDescription: boolean } | null>(null);
 
   useEffect(() => {
     return () => {
@@ -174,8 +173,15 @@ export default function HealthAnalysisPage() {
   }
 
   function handleAnalyze() {
-    if (!image && description.length < 10) {
-      alert("Please add an image or description before analyzing.");
+    const missingImage = !image;
+    const missingDescription = description.length < 10;
+
+    // Check if anything is missing
+    if (missingImage || missingDescription) {
+      setValidationError({
+        needsImage: missingImage,
+        needsDescription: missingDescription
+      });
       return;
     }
 
@@ -188,14 +194,106 @@ export default function HealthAnalysisPage() {
     }, 3000);
   }
 
-  function insertExample(example: string) {
-    setDescription(example);
+  function insertExample(exampleKey: string) {
+    setDescription(t(exampleKey));
   }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="orbital-gradient" aria-hidden />
       <div className="grid-overlay" aria-hidden />
+
+      {/* Validation Error Modal */}
+      <AnimatePresence>
+        {validationError && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setValidationError(null)}
+          >
+            <motion.div
+              className="frosted-card max-w-lg w-full rounded-3xl border-2 border-amber-500/40 bg-gradient-to-br from-slate-900/95 to-slate-800/95 p-8 shadow-2xl"
+              initial={{ scale: 0.8, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.8, y: 30, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="mb-6 text-center">
+                <motion.div
+                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 ring-4 ring-amber-500/30"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.1, type: "spring", damping: 15 }}
+                >
+                  <AlertTriangle className="h-8 w-8 text-amber-400" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-white">
+                  {t("analysis.modal.title")}
+                </h3>
+                <p className="mt-2 text-sm text-slate-400">
+                  {validationError.needsImage && validationError.needsDescription
+                    ? t("analysis.modal.sub.both")
+                    : t("analysis.modal.sub.one")}
+                </p>
+              </div>
+
+              {/* Requirements Checklist */}
+              <div className="mb-6 space-y-3">
+                {validationError.needsImage && (
+                  <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+                      <Camera className="h-4 w-4 text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">{t("analysis.modal.img.title")}</div>
+                      <div className="mt-1 text-sm text-slate-300">
+                        {t("analysis.modal.img.desc")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {validationError.needsDescription && (
+                  <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+                      <Stethoscope className="h-4 w-4 text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">{t("analysis.modal.desc.title")}</div>
+                      <div className="mt-1 text-sm text-slate-300">
+                        {t("analysis.modal.desc.desc")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <motion.button
+                  onClick={() => setValidationError(null)}
+                  className="flex-1 rounded-full border-2 border-amber-500/30 bg-amber-500/10 px-6 py-3 font-semibold text-amber-300 transition hover:border-amber-500/50 hover:bg-amber-500/20"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {t("analysis.modal.btn")}
+                </motion.button>
+              </div>
+
+              {/* Helper Text */}
+              <p className="mt-4 text-center text-xs text-slate-500">
+                {validationError.needsImage && validationError.needsDescription
+                  ? t("analysis.modal.note.both")
+                  : t("analysis.modal.note.one")}
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative z-10 mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
@@ -206,22 +304,22 @@ export default function HealthAnalysisPage() {
           transition={{ duration: 0.5 }}
         >
           <Link
-            href="/dashboard"
+            href="/en/dashboard"
             className="mb-4 inline-flex items-center gap-2 text-slate-300 transition hover:text-cyan-300"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span>Back to Dashboard</span>
+            <span>{t("analysis.back")}</span>
           </Link>
 
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold text-white sm:text-4xl">
-              Get AI Health Assistance
+              {t("analysis.title")}
             </h1>
             <p className="text-lg text-slate-300">
-              Tell us what&apos;s bothering you, we&apos;ll guide you safely.
+              {t("analysis.subtitle")}
             </p>
             <p className="text-sm text-slate-400">
-              Our AI will analyze your symptoms and recommend safe first-aid steps.
+              {t("analysis.desc")}
             </p>
           </div>
         </motion.header>
@@ -239,11 +337,10 @@ export default function HealthAnalysisPage() {
                 <AlertTriangle className="h-8 w-8 shrink-0 text-red-400" />
                 <div className="flex-1">
                   <h3 className="mb-2 text-xl font-semibold text-red-300">
-                    Urgent attention recommended
+                    {t("analysis.urgent.title")}
                   </h3>
                   <p className="mb-4 text-slate-200">
-                    Please seek medical help nearby. This appears to be a serious condition that
-                    requires professional medical attention.
+                    {t("analysis.urgent.desc")}
                   </p>
                   <div className="flex gap-3">
                     <motion.button
@@ -251,14 +348,14 @@ export default function HealthAnalysisPage() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Call Nearby Doctor
+                      {t("analysis.urgent.btn.doctor")}
                     </motion.button>
                     <motion.button
                       className="rounded-full border border-red-500/50 bg-red-500/20 px-6 py-2 font-semibold text-red-300"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Show Hospital List
+                      {t("analysis.urgent.btn.hospital")}
                     </motion.button>
                   </div>
                 </div>
@@ -281,10 +378,10 @@ export default function HealthAnalysisPage() {
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-white">
-                  Upload or Capture the Affected Area
+                  {t("analysis.upload.title")}
                 </h2>
                 <p className="text-sm text-slate-400">
-                  Take a clear photo using the machine camera or upload from your phone
+                  {t("analysis.upload.subtitle")}
                 </p>
               </div>
             </div>
@@ -314,8 +411,8 @@ export default function HealthAnalysisPage() {
                 >
                   <Camera className="h-8 w-8 text-cyan-400" />
                   <div className="text-left">
-                    <div className="font-semibold text-white">Capture Image</div>
-                    <div className="text-sm text-slate-400">Use machine camera</div>
+                    <div className="font-semibold text-white">{t("analysis.upload.btn.capture")}</div>
+                    <div className="text-sm text-slate-400">{t("analysis.upload.btn.capture.sub")}</div>
                   </div>
                 </motion.button>
 
@@ -327,8 +424,8 @@ export default function HealthAnalysisPage() {
                 >
                   <Upload className="h-8 w-8 text-purple-400" />
                   <div className="text-left">
-                    <div className="font-semibold text-white">Upload Image</div>
-                    <div className="text-sm text-slate-400">From your device</div>
+                    <div className="font-semibold text-white">{t("analysis.upload.btn.upload")}</div>
+                    <div className="text-sm text-slate-400">{t("analysis.upload.btn.upload.sub")}</div>
                   </div>
                 </motion.button>
               </div>
@@ -343,8 +440,7 @@ export default function HealthAnalysisPage() {
             />
 
             <p className="mt-4 text-sm text-slate-400">
-              <span className="font-medium text-cyan-300">Tip:</span> If it&apos;s a cut, rash,
-              burn, swelling, or skin irritation — this helps the AI understand it better.
+              <span className="font-medium text-cyan-300">{t("analysis.upload.tip")}</span> {t("analysis.upload.tip.text")}
             </p>
           </div>
         </motion.section>
@@ -363,10 +459,10 @@ export default function HealthAnalysisPage() {
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-white">
-                  Add an Optional Description
+                  {t("analysis.desc.title")}
                 </h2>
                 <p className="text-sm text-slate-400">
-                  Describe your issue in your own words (optional but helpful)
+                  {t("analysis.desc.subtitle")}
                 </p>
               </div>
             </div>
@@ -374,23 +470,23 @@ export default function HealthAnalysisPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your symptoms… (Optional)"
+              placeholder={t("analysis.desc.placeholder")}
               className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
               rows={4}
             />
 
             <div className="mt-4">
-              <p className="mb-2 text-sm font-medium text-slate-300">Examples you can use:</p>
+              <p className="mb-2 text-sm font-medium text-slate-300">{t("analysis.desc.examples")}</p>
               <div className="flex flex-wrap gap-2">
-                {exampleDescriptions.map((example) => (
+                {exampleDescriptions.map((exampleKey) => (
                   <motion.button
-                    key={example}
-                    onClick={() => insertExample(example)}
+                    key={exampleKey}
+                    onClick={() => insertExample(exampleKey)}
                     className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {example}
+                    {t(exampleKey)}
                   </motion.button>
                 ))}
               </div>
@@ -398,122 +494,7 @@ export default function HealthAnalysisPage() {
           </div>
         </motion.section>
 
-        {/* AI Suggestions */}
-        <AnimatePresence>
-          {suggestions && (
-            <motion.section
-              className="mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-400 to-indigo-500">
-                    <Sparkles className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">
-                      Smart Suggestions Based on Your Input
-                    </h2>
-                    <p className="text-sm text-slate-400">AI analysis results</p>
-                  </div>
-                </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-2 text-sm text-slate-400">Category Detected</div>
-                    <div className="text-lg font-semibold text-white">{suggestions.category}</div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-2 text-sm text-slate-400">Confidence</div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 overflow-hidden rounded-full bg-white/10">
-                        <motion.div
-                          className="h-2 bg-gradient-to-r from-cyan-400 to-blue-500"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${suggestions.confidence}%` }}
-                          transition={{ duration: 1 }}
-                        />
-                      </div>
-                      <span className="text-lg font-semibold text-white">
-                        {suggestions.confidence}%
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-2 text-sm text-slate-400">Severity Level</div>
-                    <div className="flex items-center gap-2">
-                      {suggestions.severity === "High" && (
-                        <Activity className="h-5 w-5 text-red-400" />
-                      )}
-                      {suggestions.severity === "Moderate" && (
-                        <Activity className="h-5 w-5 text-yellow-400" />
-                      )}
-                      {suggestions.severity === "Low" && (
-                        <Activity className="h-5 w-5 text-green-400" />
-                      )}
-                      <span
-                        className={`text-lg font-semibold ${
-                          suggestions.severity === "High"
-                            ? "text-red-400"
-                            : suggestions.severity === "Moderate"
-                              ? "text-yellow-400"
-                              : "text-green-400"
-                        }`}
-                      >
-                        {suggestions.severity}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-2 text-sm text-slate-400">Doctor Consultation</div>
-                    <div className="flex items-center gap-2">
-                      {suggestions.needsDoctor ? (
-                        <>
-                          <AlertTriangle className="h-5 w-5 text-red-400" />
-                          <span className="text-lg font-semibold text-red-400">Recommended</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="h-5 w-5 text-green-400" />
-                          <span className="text-lg font-semibold text-green-400">Not Required</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <div className="mb-2 text-sm font-medium text-slate-300">Suggested Items:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.suggestedItems.map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-300"
-                      >
-                        {item === "Bandage" && <Bandage className="h-4 w-4" />}
-                        {item === "Antiseptic" && <Pill className="h-4 w-4" />}
-                        {item === "Pain Relief" && <Pill className="h-4 w-4" />}
-                        {item === "Fever Tablet" && <Pill className="h-4 w-4" />}
-                        {item === "ORS" && <Pill className="h-4 w-4" />}
-                        {item === "Cold Pack" && <Bandage className="h-4 w-4" />}
-                        {item === "Burn Gel" && <Pill className="h-4 w-4" />}
-                        {item === "Cotton" && <Bandage className="h-4 w-4" />}
-                        {item === "Thermometer" && <Activity className="h-4 w-4" />}
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
 
         {/* Analyze Button */}
         {(image || description.length > 0) && (
@@ -534,11 +515,11 @@ export default function HealthAnalysisPage() {
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Analyzing...
+                    {t("analysis.btn.analyzing")}
                   </>
                 ) : (
                   <>
-                    Analyze My Issue
+                    {t("analysis.btn.analyze")}
                     <Sparkles className="h-5 w-5" />
                   </>
                 )}
@@ -546,7 +527,7 @@ export default function HealthAnalysisPage() {
               <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
             </motion.button>
             <p className="mt-2 text-center text-sm text-slate-400">
-              Takes ~3 seconds. Your data stays private.
+              {t("analysis.btn.note")}
             </p>
           </motion.div>
         )}
@@ -561,10 +542,9 @@ export default function HealthAnalysisPage() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 shrink-0 text-cyan-400" />
             <div>
-              <p className="font-medium text-slate-300">Privacy Note</p>
+              <p className="font-medium text-slate-300">{t("analysis.privacy.title")}</p>
               <p className="mt-1">
-                We don&apos;t store your photo. It&apos;s analyzed once and deleted immediately. Only
-                a brief summary is kept for your receipt.
+                {t("analysis.privacy.text")}
               </p>
             </div>
           </div>
@@ -589,7 +569,7 @@ export default function HealthAnalysisPage() {
               exit={{ opacity: 0, scale: 0.9, y: -20 }}
             >
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-white">Capture Photo</h3>
+                <h3 className="text-xl font-semibold text-white">{t("analysis.camera.title")}</h3>
                 <button
                   onClick={closeCamera}
                   className="text-slate-400 transition hover:text-white"
@@ -613,7 +593,7 @@ export default function HealthAnalysisPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Cancel
+                  {t("analysis.camera.cancel")}
                 </motion.button>
                 <motion.button
                   onClick={capturePhoto}
@@ -621,7 +601,7 @@ export default function HealthAnalysisPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Capture
+                  {t("analysis.camera.capture")}
                 </motion.button>
               </div>
             </motion.div>
@@ -631,4 +611,3 @@ export default function HealthAnalysisPage() {
     </div>
   );
 }
-

@@ -1,0 +1,35 @@
+﻿
+> smart-health-vending@0.1.0 lint
+> eslint
+
+
+D:\CureGenie\Frontend\src\app\en\page.tsx
+   9:5   warning  'Bandage' is defined but never used               @typescript-eslint/no-unused-vars
+  25:16  warning  'language' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  25:26  warning  'setLanguage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\en\settings\page.tsx
+  12:11  warning  'LinkIcon' is defined but never used                   @typescript-eslint/no-unused-vars
+  14:15  warning  'SettingsIcon' is defined but never used               @typescript-eslint/no-unused-vars
+  36:10  warning  'textSize' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  36:20  warning  'setTextSize' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  37:10  warning  'highContrast' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  37:24  warning  'setHighContrast' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  38:10  warning  'reducedMotion' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  38:25  warning  'setReducedMotion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\hi\page.tsx
+  8:5  warning  'Bandage' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\hi\settings\page.tsx
+  11:13  warning  'LinkIcon' is defined but never used                   @typescript-eslint/no-unused-vars
+  13:17  warning  'SettingsIcon' is defined but never used               @typescript-eslint/no-unused-vars
+  34:12  warning  'textSize' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  34:22  warning  'setTextSize' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  35:12  warning  'highContrast' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  35:26  warning  'setHighContrast' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  36:12  warning  'reducedMotion' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  36:27  warning  'setReducedMotion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 20 problems (0 errors, 20 warnings)
+

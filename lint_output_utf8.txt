@@ -1,0 +1,87 @@
+﻿
+> smart-health-vending@0.1.0 lint
+> eslint
+
+
+D:\CureGenie\Frontend\src\app\en\api\read-barcode\route.ts
+  114:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\CureGenie\Frontend\src\app\en\api\student-profile\route.ts
+  32:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\CureGenie\Frontend\src\app\en\auth\page.tsx
+   46:9   warning  'canvasRef' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  206:24  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+D:\CureGenie\Frontend\src\app\en\dashboard\page.tsx
+  132:6  warning  React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\CureGenie\Frontend\src\app\en\health-analysis\page.tsx
+  10:3  warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3  warning  'Bandage' is defined but never used       @typescript-eslint/no-unused-vars
+  17:3  warning  'Pill' is defined but never used          @typescript-eslint/no-unused-vars
+  18:3  warning  'Activity' is defined but never used      @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\en\page.tsx
+   9:5   warning  'Bandage' is defined but never used               @typescript-eslint/no-unused-vars
+  25:16  warning  'language' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  25:26  warning  'setLanguage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\en\settings\page.tsx
+  12:11  warning  'LinkIcon' is defined but never used                   @typescript-eslint/no-unused-vars
+  14:15  warning  'SettingsIcon' is defined but never used               @typescript-eslint/no-unused-vars
+  36:10  warning  'textSize' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  36:20  warning  'setTextSize' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  37:10  warning  'highContrast' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  37:24  warning  'setHighContrast' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  38:10  warning  'reducedMotion' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  38:25  warning  'setReducedMotion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\hi\auth\page.tsx
+  202:32  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  673:43  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  673:54  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  682:81  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  682:92  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\CureGenie\Frontend\src\app\hi\health-analysis\page.tsx
+  10:5  warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+  16:5  warning  'Bandage' is defined but never used       @typescript-eslint/no-unused-vars
+  17:5  warning  'Pill' is defined but never used          @typescript-eslint/no-unused-vars
+  18:5  warning  'Activity' is defined but never used      @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\hi\page.tsx
+  8:5  warning  'Bandage' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\app\hi\settings\page.tsx
+  11:13  warning  'LinkIcon' is defined but never used                   @typescript-eslint/no-unused-vars
+  13:17  warning  'SettingsIcon' is defined but never used               @typescript-eslint/no-unused-vars
+  34:12  warning  'textSize' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  34:22  warning  'setTextSize' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  35:12  warning  'highContrast' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  35:26  warning  'setHighContrast' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  36:12  warning  'reducedMotion' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  36:27  warning  'setReducedMotion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\CureGenie\Frontend\src\context\LanguageContext.tsx
+  678:9  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\CureGenie\Frontend\src\context\LanguageContext.tsx:678:9
+  676 |
+  677 |     useEffect(() => {
+> 678 |         refreshLanguage();
+      |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  679 |     }, []);
+  680 |
+  681 |     const setLanguage = async (lang: Language) => {  react-hooks/set-state-in-effect
+  679:8  warning  React Hook useEffect has a missing dependency: 'refreshLanguage'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+Γ£û 41 problems (10 errors, 31 warnings)
+
