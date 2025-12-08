@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { BrowserMultiFormatReader } from "@zxing/library";
 import {
   CheckCircle2,
   XCircle,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { setUserCookie } from "@/utils/cookies";
 
 type AuthStatus =
   | "idle"
@@ -29,7 +29,6 @@ type AuthStatus =
 
 // Constants
 const REDIRECT_DELAY_MS = 2500;
-const CAMERA_PERMISSION_TIMEOUT_MS = 30000;
 
 export default function AuthPage() {
   const router = useRouter();
@@ -46,7 +45,6 @@ export default function AuthPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const scanFrameRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,12 +59,9 @@ export default function AuthPage() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    codeReaderRef.current?.reset();
   }
 
   useEffect(() => {
-    codeReaderRef.current = new BrowserMultiFormatReader();
-
     // Cleanup on unmount
     return () => {
       stopCamera();
@@ -196,7 +191,7 @@ export default function AuthPage() {
 
       const base64Image = capturedImage.split(",")[1];
 
-      const response = await fetch("/api/read-barcode", {
+      const response = await fetch("/api/proxy/api/read-barcode", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -234,7 +229,8 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (data.success && data.barcode) {
-        handleVerificationSuccess(data.barcode, data.firstName);
+        // Pass full profile data if available
+        handleVerificationSuccess(data.barcode, data.name, data);
       } else {
         handleVerificationFail(data.message || "Student ID not found in database.");
       }
@@ -257,7 +253,7 @@ export default function AuthPage() {
     }
   }
 
-  function handleVerificationSuccess(barcodeText: string, firstName?: string | null) {
+  async function handleVerificationSuccess(barcodeText: string, name?: string | null, profileData?: Record<string, unknown>) {
     // Stop camera before showing success animation
     stopCamera();
 
@@ -265,8 +261,8 @@ export default function AuthPage() {
     setMessage("Verification Successful!");
     setShowVerifiedAnimation(true);
     setVerificationFailed(false);
-    // Use first name from backend, or fallback to "Student" if not available
-    setUserName(firstName || "Student");
+    // Use name from backend, or fallback to "Student" if not available
+    setUserName(name || "Student");
 
     // Navigate to dashboard after animation
     setTimeout(async () => {
@@ -275,9 +271,22 @@ export default function AuthPage() {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem("studentId", barcodeText);
-        if (firstName) {
-          sessionStorage.setItem("studentFirstName", firstName);
+        if (name) {
+          sessionStorage.setItem("studentFirstName", name);
         }
+
+        // Store profile in cookie if we have full data from barcode response
+        if (profileData && profileData.fullName) {
+          setUserCookie({
+            uid: (profileData.uid as string) || barcodeText,
+            fullName: profileData.fullName as string,
+            name: name || "Student",
+            age: profileData.age as number | null,
+            allergy: profileData.allergy as string | null,
+            number: (profileData.number as string) || ""
+          });
+        }
+
         // Refresh language context to pick up user preference
         await refreshLanguage();
       }
@@ -315,20 +324,21 @@ export default function AuthPage() {
     setVerificationFailed(false);
   }
 
-  function handleDevBypass() {
-    setShowVerifiedAnimation(true);
-    setStatus("success");
-    setMessage("Verification Successful!");
-    setUserName("Developer");
-
-    setTimeout(() => {
-      router.push("/en/dashboard");
-    }, 2500);
-  }
-
-  function handleDevUpload() {
-    fileInputRef.current?.click();
-  }
+  // Development helper functions (commented out - not currently used)
+  // function handleDevBypass() {
+  //   setShowVerifiedAnimation(true);
+  //   setStatus("success");
+  //   setMessage("Verification Successful!");
+  //   setUserName("Developer");
+  //
+  //   setTimeout(() => {
+  //     router.push("/en/dashboard");
+  //   }, 2500);
+  // }
+  //
+  // function handleDevUpload() {
+  //   fileInputRef.current?.click();
+  // }
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

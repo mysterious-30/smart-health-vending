@@ -37,7 +37,7 @@ export function LanguageProvider({
         const uid = sessionStorage.getItem("studentId");
         if (uid) {
             try {
-                const res = await fetch(`/api/student-profile?uid=${encodeURIComponent(uid)}`);
+                const res = await fetch(`/api/proxy/api/student-profile/${encodeURIComponent(uid)}`);
                 const data = await res.json();
                 if (data.success && data.language) {
                     setLanguageState(data.language as Language);
@@ -57,7 +57,7 @@ export function LanguageProvider({
         const uid = sessionStorage.getItem("studentId");
         if (uid) {
             try {
-                await fetch("/api/update-language", {
+                await fetch("/api/proxy/api/update-language", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ uid, language: newLang }),

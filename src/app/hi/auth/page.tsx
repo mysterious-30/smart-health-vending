@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { BrowserMultiFormatReader } from "@zxing/library";
 import {
     CheckCircle2,
     XCircle,
@@ -15,6 +14,7 @@ import {
     Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { setUserCookie } from "@/utils/cookies";
 
 type AuthStatus =
     | "idle"
@@ -39,7 +39,6 @@ export default function HindiAuthPage() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const scanFrameRef = useRef<HTMLDivElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Function to stop camera and cleanup
@@ -53,12 +52,9 @@ export default function HindiAuthPage() {
         if (videoRef.current) {
             videoRef.current.srcObject = null;
         }
-        codeReaderRef.current?.reset();
     }
 
     useEffect(() => {
-        codeReaderRef.current = new BrowserMultiFormatReader();
-
         // Cleanup on unmount
         return () => {
             stopCamera();
@@ -188,7 +184,7 @@ export default function HindiAuthPage() {
 
             const base64Image = capturedImage.split(",")[1];
 
-            const response = await fetch("/api/read-barcode", {
+            const response = await fetch("/api/proxy/api/read-barcode", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -226,7 +222,8 @@ export default function HindiAuthPage() {
             const data = await response.json();
 
             if (data.success && data.barcode) {
-                handleVerificationSuccess(data.barcode, data.firstName);
+                // Pass full profile data if available
+                handleVerificationSuccess(data.barcode, data.name, data);
             } else {
                 handleVerificationFail(data.message || "डेटाबेस में छात्र आईडी नहीं मिली।");
             }
@@ -249,7 +246,7 @@ export default function HindiAuthPage() {
         }
     }
 
-    function handleVerificationSuccess(barcodeText: string, firstName?: string | null) {
+    async function handleVerificationSuccess(barcodeText: string, name?: string | null, profileData?: Record<string, unknown>) {
         // Stop camera before showing success animation
         stopCamera();
 
@@ -257,8 +254,8 @@ export default function HindiAuthPage() {
         setMessage("सत्यापन सफल!");
         setShowVerifiedAnimation(true);
         setVerificationFailed(false);
-        // Use first name from backend, or fallback to "Student" if not available
-        setUserName(firstName || "छात्र");
+        // Use name from backend, or fallback to "Student" if not available
+        setUserName(name || "छात्र");
 
         // Navigate to dashboard after animation
         setTimeout(async () => {
@@ -267,8 +264,20 @@ export default function HindiAuthPage() {
 
             if (typeof window !== "undefined") {
                 sessionStorage.setItem("studentId", barcodeText);
-                if (firstName) {
-                    sessionStorage.setItem("studentFirstName", firstName);
+                if (name) {
+                    sessionStorage.setItem("studentFirstName", name);
+                }
+
+                // Store profile in cookie if we have full data from barcode response
+                if (profileData && profileData.fullName) {
+                    setUserCookie({
+                        uid: (profileData.uid as string) || barcodeText,
+                        fullName: profileData.fullName as string,
+                        name: name || "छात्र",
+                        age: profileData.age as number | null,
+                        allergy: profileData.allergy as string | null,
+                        number: (profileData.number as string) || ""
+                    });
                 }
             }
             router.push("/hi/dashboard");

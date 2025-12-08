@@ -95,7 +95,7 @@ export default function DashboardPage() {
         setNameError("");
 
         const response = await fetch(
-          `/api/student-profile?uid=${encodeURIComponent(storedId)}`,
+          `/api/proxy/api/student-profile/${encodeURIComponent(storedId)}`,
           { signal: controller.signal }
         );
 
@@ -154,7 +154,7 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-semibold text-white">
                 Welcome, {isLoadingName ? "..." : studentName || "Student"}!
               </h1>
-              <p className="text-sm text-slate-400">You're signed in</p>
+              <p className="text-sm text-slate-400">You&apos;re signed in</p>
               {nameError && (
                 <p className="text-xs text-amber-400">{nameError}</p>
               )}
@@ -168,7 +168,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <p className="text-lg text-slate-100">
-              You're now signed in and ready to use the Smart Health Assistance Machine.
+              You&apos;re now signed in and ready to use the Smart Health Assistance Machine.
             </p>
             <p className="mt-2 text-sm text-slate-300">
               Choose what you want to do:
@@ -255,7 +255,7 @@ export default function DashboardPage() {
             <AlertCircle className="h-5 w-5 shrink-0 text-amber-400" />
             <div className="space-y-2">
               <p>
-                This machine offers basic first aid only. For serious cases, you'll be directed to the nearest medical center.
+                This machine offers basic first aid only. For serious cases, you&apos;ll be directed to the nearest medical center.
               </p>
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-cyan-400" />

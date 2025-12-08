@@ -91,7 +91,7 @@ export default function HindiDashboardPage() {
                 setNameError("");
 
                 const response = await fetch(
-                    `/api/student-profile/${encodeURIComponent(storedId)}`,
+                    `/api/proxy/api/student-profile/${encodeURIComponent(storedId)}`,
                     { signal: controller.signal }
                 );
 

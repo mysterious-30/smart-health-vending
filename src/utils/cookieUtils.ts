@@ -1,3 +1,13 @@
+interface UserProfile {
+    uid: string;
+    fullName: string;
+    firstName?: string;
+    number: string;
+    age: number | null;
+    allergy: string | null;
+    language?: string;
+}
+
 export function setCookie(name: string, value: string, days: number) {
     if (typeof document === "undefined") return;
 
@@ -28,14 +38,14 @@ export function deleteCookie(name: string) {
     document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
 }
 
-export function setProfileCookie(profile: any) {
+export function setProfileCookie(profile: UserProfile) {
     // Store full profile as JSON string
     // Encode it to handle special characters safely
     const jsonProfile = JSON.stringify(profile);
     setCookie("studentProfile", encodeURIComponent(jsonProfile), 7); // Store for 7 days
 }
 
-export function getProfileCookie(): any | null {
+export function getProfileCookie(): UserProfile | null {
     const cookie = getCookie("studentProfile");
     if (!cookie) return null;
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { getUserCookie, clearUserCookie } from "@/utils/cookies";
 import {
     ArrowLeft,
     User,
@@ -12,7 +13,6 @@ import {
     CreditCard,
     HelpCircle,
     LogOut,
-    Phone,
     RefreshCw,
     Eye,
     Trash2,
@@ -21,6 +21,10 @@ import {
     Mail,
     MessageSquare,
     AlertTriangle,
+    Edit,
+    Save,
+    X as XIcon,
+    CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -32,11 +36,41 @@ export default function SettingsPage() {
     const [emailReceipts, setEmailReceipts] = useState(true);
     const [monthlySummary, setMonthlySummary] = useState(false);
     const [emergencyAlerts, setEmergencyAlerts] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedProfile, setEditedProfile] = useState<{ age: string; allergy: string; number: string }>({ age: "", allergy: "", number: "" });
+    const [isSaving, setIsSaving] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+
+    const [currentDate, setCurrentDate] = useState<string>("");
+    const hasFetchedProfile = useRef(false);
 
     useEffect(() => {
+        setCurrentDate(new Date().toLocaleString('hi-IN'));
+    }, []);
+
+    useEffect(() => {
+        // Prevent duplicate fetches in React StrictMode
+        if (hasFetchedProfile.current) return;
+
+        // Try to get profile from cookie first
+        const cachedProfile = getUserCookie();
+        if (cachedProfile) {
+            hasFetchedProfile.current = true;
+            setProfile({
+                fullName: cachedProfile.fullName,
+                uid: cachedProfile.uid,
+                number: cachedProfile.number,
+                age: cachedProfile.age,
+                allergy: cachedProfile.allergy
+            });
+            return; // Skip API call if we have cached data
+        }
+
+        // Fallback to API if no cookie
         const uid = sessionStorage.getItem("studentId");
         if (uid) {
-            fetch(`/api/student-profile?uid=${encodeURIComponent(uid)}`)
+            hasFetchedProfile.current = true;
+            fetch(`/api/proxy/api/student-profile/${encodeURIComponent(uid)}`)
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.success) {
@@ -53,8 +87,77 @@ export default function SettingsPage() {
         }
     }, []);
 
+    function handleEdit() {
+        if (profile) {
+            setEditedProfile({
+                age: profile.age?.toString() || "",
+                allergy: profile.allergy || "",
+                number: profile.number || "",
+            });
+            setIsEditing(true);
+            setSuccessMessage("");
+        }
+    }
+
+    function handleCancel() {
+        setIsEditing(false);
+        setEditedProfile({ age: "", allergy: "", number: "" });
+        setSuccessMessage("");
+    }
+
+    async function handleSave() {
+        if (!profile) return;
+
+        // Validate age
+        if (editedProfile.age && (isNaN(Number(editedProfile.age)) || Number(editedProfile.age) < 1)) {
+            alert("कृपया मान्य आयु दर्ज करें");
+            return;
+        }
+
+        setIsSaving(true);
+        setSuccessMessage("");
+
+        try {
+            const response = await fetch("/api/proxy/api/update-profile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    uid: profile.uid,
+                    age: editedProfile.age ? Number(editedProfile.age) : null,
+                    allergy: editedProfile.allergy || null,
+                    number: editedProfile.number,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update local profile state
+                setProfile({
+                    ...profile,
+                    age: editedProfile.age ? Number(editedProfile.age) : null,
+                    allergy: editedProfile.allergy || null,
+                    number: editedProfile.number,
+                });
+                setIsEditing(false);
+                setSuccessMessage("प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!");
+                setTimeout(() => setSuccessMessage(""), 3000);
+            } else {
+                alert(data.message || "प्रोफ़ाइल अपडेट करने में विफल");
+            }
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            alert("आपकी प्रोफ़ाइल अपडेट करते समय एक त्रुटि हुई");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
     function handleLogout() {
         if (confirm("क्या आप निश्चित रूप से लॉग आउट करना चाहते हैं?")) {
+            // Clear user cookie
+            clearUserCookie();
+
             // Clear session
             sessionStorage.clear();
             // Navigate to home or auth page
@@ -121,41 +224,99 @@ export default function SettingsPage() {
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">पंजीकृत मोबाइल नंबर</div>
-                                <div className="text-lg font-semibold text-white">{profile?.number || "लोड हो रहा है..."}</div>
+                                {isEditing ? (
+                                    <input
+                                        type="tel"
+                                        value={editedProfile.number}
+                                        onChange={(e) => setEditedProfile({ ...editedProfile, number: e.target.value })}
+                                        className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                                        placeholder="फोन नंबर दर्ज करें"
+                                    />
+                                ) : (
+                                    <div className="text-lg font-semibold text-white">{profile?.number || "लोड हो रहा है..."}</div>
+                                )}
                             </div>
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">सत्यापित किया गया</div>
-                                <div className="text-lg font-semibold text-white">{new Date().toLocaleString('hi-IN')}</div>
+                                <div className="text-lg font-semibold text-white">{currentDate || "लोड हो रहा है..."}</div>
                             </div>
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">उम्र</div>
-                                <div className="text-lg font-semibold text-white">{profile?.age || "लोड हो रहा है..."}</div>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        value={editedProfile.age}
+                                        onChange={(e) => setEditedProfile({ ...editedProfile, age: e.target.value })}
+                                        className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                                        placeholder="उम्र दर्ज करें"
+                                    />
+                                ) : (
+                                    <div className="text-lg font-semibold text-white">{profile?.age || "लोड हो रहा है..."}</div>
+                                )}
                             </div>
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">एलर्जी</div>
-                                <div className="text-lg font-semibold text-white">{profile?.allergy || "कोई नहीं"}</div>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editedProfile.allergy}
+                                        onChange={(e) => setEditedProfile({ ...editedProfile, allergy: e.target.value })}
+                                        className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                                        placeholder="एलर्जी दर्ज करें (यदि कोई हो)"
+                                    />
+                                ) : (
+                                    <div className="text-lg font-semibold text-white">{profile?.allergy || "कोई नहीं"}</div>
+                                )}
                             </div>
 
+                            {successMessage && (
+                                <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 p-4 text-emerald-400">
+                                    <CheckCircle className="h-5 w-5" />
+                                    <span>{successMessage}</span>
+                                </div>
+                            )}
+
                             <div className="flex gap-3">
-                                <motion.button
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <Phone className="h-4 w-4" />
-                                    फोन अपडेट करें
-                                </motion.button>
-                                <motion.button
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <RefreshCw className="h-4 w-4" />
-                                    जानकारी रिफ्रेश करें
-                                </motion.button>
+                                {isEditing ? (
+                                    <>
+                                        <motion.button
+                                            onClick={handleCancel}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:bg-white/10"
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <XIcon className="h-4 w-4" />
+                                            रद्द करें
+                                        </motion.button>
+                                        <motion.button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-cyan-500 px-4 py-3 font-medium text-white transition hover:bg-cyan-400 disabled:opacity-50"
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            {isSaving ? (
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Save className="h-4 w-4" />
+                                            )}
+                                            {isSaving ? "सहेज रहा है..." : "परिवर्तन सहेजें"}
+                                        </motion.button>
+                                    </>
+                                ) : (
+                                    <motion.button
+                                        onClick={handleEdit}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                        जानकारी संपादित करें
+                                    </motion.button>
+                                )}
                             </div>
                         </div>
                     </div>
