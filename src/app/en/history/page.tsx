@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+
 interface Activity {
   id: string;
   date: string;
@@ -47,7 +48,7 @@ const recentActivities: Activity[] = [
     date: "Today",
     time: "3:42 PM",
     type: "purchase",
-    description: "Purchased Antiseptic Wipes",
+    description: "history.act.wipes",
     amount: 8,
   },
   {
@@ -55,7 +56,7 @@ const recentActivities: Activity[] = [
     date: "Yesterday",
     time: "11:10 AM",
     type: "purchase",
-    description: "Bought Fever Relief Tablet",
+    description: "history.act.fever",
     amount: 5,
   },
   {
@@ -63,15 +64,15 @@ const recentActivities: Activity[] = [
     date: "2 Days Ago",
     time: "",
     type: "analysis",
-    description: "Used AI Health Analysis → Suggested wound care",
-    items: ["Bandage", "Antiseptic", "Cotton"],
+    description: "history.act.analysis",
+    items: ["history.item.bandage", "history.item.antiseptic", "history.item.cotton"],
   },
   {
     id: "act4",
     date: "Last Week",
     time: "",
     type: "purchase",
-    description: "Purchased Bandage Pack",
+    description: "history.act.bandage",
     amount: 10,
   },
 ];
@@ -82,8 +83,8 @@ const receipts: Receipt[] = [
     receiptId: "RX-54G82",
     date: "22 Nov 2025",
     items: [
-      { name: "Bandage", quantity: 1, price: 10 },
-      { name: "Cotton Roll", quantity: 1, price: 5 },
+      { name: "history.item.bandage", quantity: 1, price: 10 },
+      { name: "history.item.roll", quantity: 1, price: 5 },
     ],
     status: "Completed",
     paymentMethod: "UPI",
@@ -94,7 +95,7 @@ const receipts: Receipt[] = [
     id: "rec2",
     receiptId: "RX-52F91",
     date: "20 Nov 2025",
-    items: [{ name: "Fever Relief Tablet", quantity: 1, price: 5 }],
+    items: [{ name: "history.item.fever", quantity: 1, price: 5 }],
     status: "Completed",
     paymentMethod: "Card",
     sentTo: "+91 •••• 7821",
@@ -105,8 +106,8 @@ const receipts: Receipt[] = [
     receiptId: "RX-51E80",
     date: "18 Nov 2025",
     items: [
-      { name: "Antiseptic Wipes", quantity: 2, price: 8 },
-      { name: "Bandage Pack", quantity: 1, price: 10 },
+      { name: "history.item.wipes", quantity: 2, price: 8 },
+      { name: "history.item.pack", quantity: 1, price: 10 },
     ],
     status: "Completed",
     paymentMethod: "UPI",
@@ -116,13 +117,14 @@ const receipts: Receipt[] = [
 ];
 
 const insights = [
-  "You've used first-aid items 3 times this month.",
-  "Common purchases: Bandages, Pain Relievers.",
-  "Tip: Keep a small personal first-aid kit to stay prepared.",
-  "Your last fever-related item was 5 days ago — stay hydrated!",
+  "history.insight.1",
+  "history.insight.2",
+  "history.insight.3",
+  "history.insight.4",
 ];
 
 export default function HistoryPage() {
+
   const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
   const [showMoreInsights, setShowMoreInsights] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,7 +135,7 @@ export default function HistoryPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   function handleDownloadReceipt(receiptId: string) {
-    alert(`Downloading receipt ${receiptId}...`);
+    alert(`Downloading receipt: ${receiptId}`);
   }
 
   function handlePrintReceipt() {
@@ -141,7 +143,7 @@ export default function HistoryPage() {
   }
 
   function handleDownloadHistory() {
-    alert("Generating PDF of your full usage history...");
+    alert("Downloading your complete history...");
   }
 
   const filteredReceipts = receipts.filter((receipt) => {
@@ -163,6 +165,27 @@ export default function HistoryPage() {
     return true;
   });
 
+  const getDateFilterLabel = (filter: string) => {
+    switch (filter) {
+      case "All": return "All";
+      case "Today": return "Today";
+      case "Week": return "Week";
+      case "Month": return "Month";
+      default: return filter;
+    }
+  };
+
+  const getCategoryFilterLabel = (filter: string) => {
+    switch (filter) {
+      case "All": return "All";
+      case "Medicine": return "Medicine";
+      case "First-Aid": return "First Aid";
+      case "Hygiene": return "Hygiene";
+      case "AI-Advice": return "AI-Advice";
+      default: return filter;
+    }
+  };
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="orbital-gradient" aria-hidden />
@@ -177,20 +200,19 @@ export default function HistoryPage() {
           transition={{ duration: 0.5 }}
         >
           <Link
-            href="/dashboard"
+            href="/en/dashboard"
             className="mb-4 inline-flex items-center gap-2 text-slate-300 transition hover:text-cyan-300"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span>Back to Dashboard</span>
+            <span>{"Back to Dashboard"}</span>
           </Link>
 
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold text-white sm:text-4xl">
-              Your Usage History
+              {"Your Usage History"}
             </h1>
             <p className="text-lg text-slate-300">
-              View your recent visits, receipts, and items you purchased from this Health
-              Assistance Machine.
+              {"View your recent visits, receipts, and items you purchased from this Health Assistance Machine."}
             </p>
           </div>
         </motion.header>
@@ -208,7 +230,7 @@ export default function HistoryPage() {
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search: item name, month, or receipt ID"
+                  placeholder={"Search: item name, month, or receipt ID"}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-white/20 bg-white/5 px-10 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
@@ -221,7 +243,7 @@ export default function HistoryPage() {
                 whileTap={{ scale: 0.95 }}
               >
                 <Filter className="h-5 w-5" />
-                <span>Filters</span>
+                <span>{"Filter"}</span>
                 {showFilters ? (
                   <ChevronUp className="h-4 w-4" />
                 ) : (
@@ -240,22 +262,21 @@ export default function HistoryPage() {
                 >
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-300">
-                      Filter by Date
+                      {"Filter by Date"}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {(["All", "Today", "Week", "Month"] as const).map((filter) => (
                         <motion.button
                           key={filter}
                           onClick={() => setDateFilter(filter)}
-                          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                            dateFilter === filter
-                              ? "bg-cyan-400 text-slate-900"
-                              : "bg-white/5 text-slate-300 hover:bg-white/10"
-                          }`}
+                          className={`rounded-full px-4 py-2 text-sm font-medium transition ${dateFilter === filter
+                            ? "bg-cyan-400 text-slate-900"
+                            : "bg-white/5 text-slate-300 hover:bg-white/10"
+                            }`}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
-                          {filter}
+                          {getDateFilterLabel(filter)}
                         </motion.button>
                       ))}
                     </div>
@@ -263,7 +284,7 @@ export default function HistoryPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-300">
-                      Filter by Category
+                      {"Filter by Category"}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {(["All", "Medicine", "First-Aid", "Hygiene", "AI-Advice"] as const).map(
@@ -271,15 +292,14 @@ export default function HistoryPage() {
                           <motion.button
                             key={filter}
                             onClick={() => setCategoryFilter(filter)}
-                            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                              categoryFilter === filter
-                                ? "bg-cyan-400 text-slate-900"
-                                : "bg-white/5 text-slate-300 hover:bg-white/10"
-                            }`}
+                            className={`rounded-full px-4 py-2 text-sm font-medium transition ${categoryFilter === filter
+                              ? "bg-cyan-400 text-slate-900"
+                              : "bg-white/5 text-slate-300 hover:bg-white/10"
+                              }`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
-                            {filter}
+                            {getCategoryFilterLabel(filter)}
                           </motion.button>
                         )
                       )}
@@ -304,8 +324,8 @@ export default function HistoryPage() {
                 <Clock className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">🔄 Recent Activity</h2>
-                <p className="text-sm text-slate-400">Auto-updates every time you use the machine</p>
+                <h2 className="text-xl font-semibold text-white">🔄 {"Recent Activity"}</h2>
+                <p className="text-sm text-slate-400">{"Auto-updates every time you use the machine"}</p>
               </div>
             </div>
 
@@ -356,7 +376,7 @@ export default function HistoryPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              View Full Timeline
+              {"View Full Timeline"}
             </motion.button>
           </div>
         </motion.section>
@@ -374,9 +394,9 @@ export default function HistoryPage() {
                 <Receipt className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">🧾 Your Digital Receipts</h2>
+                <h2 className="text-xl font-semibold text-white">🧾 {"Your Digital Receipts"}</h2>
                 <p className="text-sm text-slate-400">
-                  Auto-generated & stored securely (masked identity)
+                  {"Auto-generated and securely stored (masked identity)"}
                 </p>
               </div>
             </div>
@@ -399,21 +419,20 @@ export default function HistoryPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-white">Receipt {receipt.receiptId}</h3>
+                          <h3 className="font-semibold text-white">{"Receipt"} {receipt.receiptId}</h3>
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
-                              receipt.status === "Completed"
-                                ? "bg-green-500/20 text-green-400"
-                                : receipt.status === "Pending"
-                                  ? "bg-yellow-500/20 text-yellow-400"
-                                  : "bg-red-500/20 text-red-400"
-                            }`}
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${receipt.status === "Completed"
+                              ? "bg-green-500/20 text-green-400"
+                              : receipt.status === "Pending"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-red-500/20 text-red-400"
+                              }`}
                           >
                             {receipt.status}
                           </span>
                         </div>
                         <p className="mt-1 text-sm text-slate-400">{receipt.date}</p>
-                        <p className="mt-1 text-sm text-cyan-400">Total: ₹{receipt.total}</p>
+                        <p className="mt-1 text-sm text-cyan-400">{"Total"}: ₹{receipt.total}</p>
                       </div>
                       {expandedReceipt === receipt.id ? (
                         <ChevronUp className="h-5 w-5 text-slate-400" />
@@ -433,7 +452,7 @@ export default function HistoryPage() {
                       >
                         <div className="space-y-4">
                           <div>
-                            <h4 className="mb-2 text-sm font-medium text-slate-300">Items:</h4>
+                            <h4 className="mb-2 text-sm font-medium text-slate-300">{"Items:"}</h4>
                             <div className="space-y-2">
                               {receipt.items.map((item, idx) => (
                                 <div
@@ -453,11 +472,11 @@ export default function HistoryPage() {
 
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                              <span className="text-slate-400">Payment:</span>
+                              <span className="text-slate-400">{"Payment:"}</span>
                               <p className="font-medium text-white">{receipt.paymentMethod}</p>
                             </div>
                             <div>
-                              <span className="text-slate-400">Sent To:</span>
+                              <span className="text-slate-400">{"Sent to:"}</span>
                               <p className="font-medium text-white">{receipt.sentTo}</p>
                             </div>
                           </div>
@@ -473,7 +492,7 @@ export default function HistoryPage() {
                               whileTap={{ scale: 0.95 }}
                             >
                               <Download className="h-4 w-4" />
-                              Download
+                              {"Download"}
                             </motion.button>
                             <motion.button
                               onClick={(e) => {
@@ -485,7 +504,7 @@ export default function HistoryPage() {
                               whileTap={{ scale: 0.95 }}
                             >
                               <Printer className="h-4 w-4" />
-                              Print Copy
+                              {"Print Copy"}
                             </motion.button>
                           </div>
                         </div>
@@ -511,9 +530,9 @@ export default function HistoryPage() {
                 <TrendingUp className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">📌 Smart Insights</h2>
+                <h2 className="text-xl font-semibold text-white">📌 {"Smart Insights"}</h2>
                 <p className="text-sm text-slate-400">
-                  AI-generated, personalized based on your usage
+                  {"AI-generated, personalized based on your usage"}
                 </p>
               </div>
             </div>
@@ -556,9 +575,9 @@ export default function HistoryPage() {
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">🗂 Download Your Full Log</h2>
+                <h2 className="text-xl font-semibold text-white">🗂 {"Download Your Full Log"}</h2>
                 <p className="text-sm text-slate-400">
-                  Export your entire usage history for records or documentation
+                  {"Export your entire usage history for records or documentation"}
                 </p>
               </div>
             </div>
@@ -571,11 +590,11 @@ export default function HistoryPage() {
             >
               <div className="flex items-center justify-center gap-2">
                 <Download className="h-5 w-5" />
-                Download My History (PDF)
+                {"Download My History (PDF)"}
               </div>
             </motion.button>
             <p className="mt-2 text-center text-xs text-slate-400">
-              Generated using your masked student token
+              {"Generated using your masked student token"}
             </p>
           </div>
         </motion.section>
@@ -590,10 +609,10 @@ export default function HistoryPage() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 shrink-0 text-cyan-400" />
             <div className="space-y-2">
-              <p className="font-medium text-slate-300">🛡 Privacy Notes</p>
-              <p>• Only masked Student-ID tokens are stored.</p>
-              <p>• No personal medical data is kept — only item purchases and timestamps.</p>
-              <p>• You can request deletion of your stored logs anytime.</p>
+              <p className="font-medium text-slate-300">🛡 {"Privacy Notes"}</p>
+              <p>• {"Only masked Student-ID tokens are stored."}</p>
+              <p>• {"No personal medical data is kept - only item purchases and timestamps."}</p>
+              <p>• {"You can request deletion of your stored logs anytime."}</p>
             </div>
           </div>
         </motion.footer>
@@ -601,4 +620,3 @@ export default function HistoryPage() {
     </div>
   );
 }
-

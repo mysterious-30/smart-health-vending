@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
   Stethoscope,
   ShoppingCart,
@@ -22,50 +24,76 @@ const quickBuyItems = [
   { name: "Pain Relief Tablet", icon: Pill },
 ];
 
-const dashboardSections = [
-  {
-    title: "Get AI Health Assistance",
-    description:
-      "Scan a symptom, wound, or describe how you're feeling. Our AI will guide you with safe first-aid steps and suggested items.",
-    icon: Stethoscope,
-    buttonText: "Start Health Analysis",
-    href: "/health-analysis",
-    accent: "from-cyan-400/80 to-blue-500/60",
-    gradient: "from-cyan-500/20 to-blue-500/20",
-  },
-  {
-    title: "Quick Buy (No Analysis Needed)",
-    description:
-      "Need something simple and fast? Bandage, Cotton, Antiseptic, Pain Relief Tablet, OR any available first-aid item.",
-    icon: ShoppingCart,
-    buttonText: "Buy Directly",
-    href: "/quick-buy",
-    accent: "from-emerald-400/80 to-teal-500/60",
-    gradient: "from-emerald-500/20 to-teal-500/20",
-  },
-  {
-    title: "Receipts & History",
-    description:
-      "View your past visits, receipts, and items you purchased. (Only minimal masked data is stored.)",
-    icon: Receipt,
-    buttonText: "View My Records",
-    href: "/history",
-    accent: "from-amber-400/80 to-orange-500/60",
-    gradient: "from-amber-500/20 to-orange-500/20",
-  },
-  {
-    title: "Account & Settings",
-    description:
-      "Update your contact number, preferred language, and notifications. Also see the privacy policy & usage limits.",
-    icon: Settings,
-    buttonText: "Settings",
-    href: "/settings",
-    accent: "from-purple-400/80 to-indigo-500/60",
-    gradient: "from-purple-500/20 to-indigo-500/20",
-  },
-];
+// ... imports ...
 
 export default function DashboardPage() {
+  const prefersReducedMotion = useReducedMotion();
+  const [studentName, setStudentName] = useState("Student");
+  const [isLoadingName, setIsLoadingName] = useState(true);
+  const [nameError, setNameError] = useState("");
+
+  const dashboardSections = [
+    {
+      title: "Get AI Health Assistance",
+      description: "Scan a symptom or wound and describe how you're feeling. Our AI will guide you with safe first-aid steps and suggested items.",
+      icon: Stethoscope,
+      buttonText: "Start Health Analysis",
+      href: "/en/health-analysis",
+      accent: "from-cyan-400/80 to-blue-500/60",
+      gradient: "from-cyan-500/20 to-blue-500/20",
+    },
+    {
+      title: "Quick Buy",
+      description: "Need something simple and fast? Bandages, cotton, antiseptic, pain relief tablet, or any available first-aid item.",
+      icon: ShoppingCart,
+      buttonText: "Buy Directly",
+      href: "/en/quick-buy",
+      accent: "from-emerald-400/80 to-teal-500/60",
+      gradient: "from-emerald-500/20 to-teal-500/20",
+    },
+    {
+      title: "Receipts & History",
+      description: "View your past visits, receipts, and items you purchased. (Only minimal masked data is stored.)",
+      icon: Receipt,
+      buttonText: "View My Records",
+      href: "/en/history",
+      accent: "from-amber-400/80 to-orange-500/60",
+      gradient: "from-amber-500/20 to-orange-500/20",
+    },
+    {
+      title: "Account & Settings",
+      description: "Update your contact number, preferred language, and notifications. Also view privacy policy and usage limits.",
+      icon: Settings,
+      buttonText: "Settings",
+      href: "/en/settings",
+      accent: "from-purple-400/80 to-indigo-500/60",
+      gradient: "from-purple-500/20 to-indigo-500/20",
+    },
+  ];
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const storedName = sessionStorage.getItem("studentFirstName");
+    if (storedName) {
+      setStudentName(storedName);
+    } else {
+      // Fallback for demo if not set
+      const fullProfile = sessionStorage.getItem("studentProfile");
+      if (fullProfile) {
+        try {
+          const parsed = JSON.parse(fullProfile);
+          setStudentName(parsed.name || "Student");
+        } catch (e) {
+          setStudentName("Student");
+        }
+      } else {
+        setStudentName("Student");
+      }
+    }
+    setIsLoadingName(false);
+  }, []);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="orbital-gradient" aria-hidden />
@@ -75,9 +103,9 @@ export default function DashboardPage() {
         {/* Header */}
         <motion.header
           className="mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
+          animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5 }}
         >
           <motion.div
             className="mb-6 flex items-center gap-3"
@@ -90,9 +118,12 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-white">
-                Welcome, Student!
+                Welcome, {isLoadingName ? "..." : studentName || "Student"}!
               </h1>
               <p className="text-sm text-slate-400">You&apos;re signed in</p>
+              {nameError && (
+                <p className="text-xs text-amber-400">{nameError}</p>
+              )}
             </div>
           </motion.div>
 
@@ -103,11 +134,10 @@ export default function DashboardPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <p className="text-lg text-slate-100">
-              You&apos;re now signed in and ready to use the Smart Health
-              Assistance Machine.
+              You&apos;re now signed in and ready to use the Smart Health Assistance Machine.
             </p>
             <p className="mt-2 text-sm text-slate-300">
-              Choose what you want to do today:
+              Choose what you want to do:
             </p>
           </motion.div>
         </motion.header>
@@ -118,10 +148,10 @@ export default function DashboardPage() {
             <motion.div
               key={section.title}
               className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8 transition hover:border-cyan-300/50"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-              whileHover={{ y: -4 }}
+              initial={prefersReducedMotion ? {} : { opacity: 0, y: 30 }}
+              animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.3 + index * 0.1 }}
+              whileHover={prefersReducedMotion ? {} : { y: -4 }}
             >
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
                 {/* Icon */}
@@ -139,7 +169,7 @@ export default function DashboardPage() {
                   <p className="text-slate-300">{section.description}</p>
 
                   {/* Quick Buy Items List */}
-                  {section.title === "Quick Buy (No Analysis Needed)" && (
+                  {section.title === "Quick Buy" && (
                     <div className="mt-4 flex flex-wrap gap-3">
                       {quickBuyItems.map((item) => {
                         const Icon = item.icon;
@@ -191,14 +221,12 @@ export default function DashboardPage() {
             <AlertCircle className="h-5 w-5 shrink-0 text-amber-400" />
             <div className="space-y-2">
               <p>
-                This machine offers basic first aid only. For severe cases,
-                you&apos;ll be guided to the nearest medical center.
+                This machine offers basic first aid only. For serious cases, you&apos;ll be directed to the nearest medical center.
               </p>
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-cyan-400" />
                 <p>
-                  Your identity is protected — we only store a secure student
-                  token.
+                  Your identity is protected — we only store a secure student token.
                 </p>
               </div>
             </div>
@@ -208,6 +236,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
-
