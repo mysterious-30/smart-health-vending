@@ -113,7 +113,7 @@ export default function SettingsPage() {
           ...profile,
           age: editedProfile.age ? Number(editedProfile.age) : null,
           allergy: editedProfile.allergy || null,
-          number: editedProfile.number || null,
+          number: editedProfile.number || "",
         });
         setIsEditing(false);
         setSuccessMessage("Profile updated successfully!");
