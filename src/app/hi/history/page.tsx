@@ -19,6 +19,7 @@ import {
     TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/context/ToastContext";
 
 interface Activity {
     id: string;
@@ -123,6 +124,7 @@ const insights = [
 ];
 
 export default function HindiHistoryPage() {
+    const { showToast } = useToast();
     const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
     const [showMoreInsights, setShowMoreInsights] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -133,7 +135,7 @@ export default function HindiHistoryPage() {
     const [showFilters, setShowFilters] = useState(false);
 
     function handleDownloadReceipt(receiptId: string) {
-        alert(`रसीद ${receiptId} डाउनलोड की जा रही है...`);
+        showToast(`रसीद ${receiptId} डाउनलोड की जा रही है...`, "info");
     }
 
     function handlePrintReceipt() {
@@ -141,7 +143,7 @@ export default function HindiHistoryPage() {
     }
 
     function handleDownloadHistory() {
-        alert("पूरा इतिहास डाउनलोड किया जा रहा है...");
+        showToast("पूरा इतिहास डाउनलोड किया जा रहा है...", "info");
     }
 
     const filteredReceipts = receipts.filter((receipt) => {

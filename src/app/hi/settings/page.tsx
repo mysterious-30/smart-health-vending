@@ -27,9 +27,12 @@ import {
     Edit,
     Globe
 } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function HindiSettingsPage() {
     const router = useRouter();
+    const { showToast } = useToast();
     const hasFetchedProfile = useRef(false);
 
     const [profile, setProfile] = useState<{
@@ -54,6 +57,7 @@ export default function HindiSettingsPage() {
     const [emailReceipts, setEmailReceipts] = useState(true);
     const [monthlySummary, setMonthlySummary] = useState(false);
     const [emergencyAlerts, setEmergencyAlerts] = useState(true);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     const currentDate = new Date().toLocaleDateString("hi-IN", {
         year: "numeric",
@@ -118,7 +122,7 @@ export default function HindiSettingsPage() {
 
         // Validate age
         if (editedProfile.age && (isNaN(Number(editedProfile.age)) || Number(editedProfile.age) < 1)) {
-            alert("कृपया मान्य आयु दर्ज करें");
+            showToast("कृपया मान्य आयु दर्ज करें", "error");
             return;
         }
 
@@ -151,27 +155,24 @@ export default function HindiSettingsPage() {
             });
 
             setIsEditing(false);
-            setSuccessMessage("प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!");
-            setTimeout(() => setSuccessMessage(""), 3000);
+            showToast("प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!", "success");
 
         } catch (error) {
             console.error("Error updating profile:", error);
-            alert("आपकी प्रोफ़ाइल अपडेट करते समय एक त्रुटि हुई");
+            showToast("आपकी प्रोफ़ाइल अपडेट करते समय एक त्रुटि हुई", "error");
         } finally {
             setIsSaving(false);
         }
     }
 
     function handleLogout() {
-        if (confirm("क्या आप निश्चित रूप से लॉग आउट करना चाहते हैं?")) {
-            // Clear user cookie
-            clearUserCookie();
+        setShowLogoutConfirm(true);
+    }
 
-            // Clear session
-            sessionStorage.clear();
-            // Navigate to home or auth page
-            window.location.href = "/";
-        }
+    function confirmLogout() {
+        clearUserCookie();
+        sessionStorage.clear();
+        window.location.href = "/";
     }
 
     return (
@@ -646,6 +647,17 @@ export default function HindiSettingsPage() {
                     </div>
                 </motion.section>
             </div>
+
+            <ConfirmationModal
+                isOpen={showLogoutConfirm}
+                title="लॉग आउट?"
+                message="क्या आप निश्चित रूप से लॉग आउट करना चाहते हैं? अपनी प्रोफ़ाइल तक पहुँचने के लिए आपको फिर से साइन इन करना होगा।"
+                confirmText="लॉग आउट"
+                cancelText="रद्द करें"
+                isDestructive={true}
+                onConfirm={confirmLogout}
+                onCancel={() => setShowLogoutConfirm(false)}
+            />
         </div>
     );
 }

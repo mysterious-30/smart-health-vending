@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ToastProvider } from "@/context/ToastContext";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
                 suppressHydrationWarning
             >
                 <LanguageProvider forcedLanguage="Hindi">
-                    {children}
+                    <ToastProvider>
+                        {children}
+                    </ToastProvider>
                 </LanguageProvider>
             </body>
         </html>

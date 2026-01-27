@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getUserCookie } from "@/utils/cookies";
+import { useToast } from "@/context/ToastContext";
 
 interface AISuggestion {
   diagnosis: string;
@@ -100,6 +101,7 @@ const exampleDescriptions = [
 ];
 
 export default function HealthAnalysisPage() {
+  const { showToast } = useToast();
   const [userUid, setUserUid] = useState<string | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [description, setDescription] = useState("");
@@ -169,7 +171,7 @@ export default function HealthAnalysisPage() {
       })
       .catch((err) => {
         console.error("Camera error:", err);
-        alert("Camera access denied. Please use upload instead.");
+        showToast("Camera access denied. Please use upload instead.", "error");
         setShowCamera(false);
       });
   }
@@ -253,7 +255,7 @@ export default function HealthAnalysisPage() {
 
     } catch (error) {
       console.error("Analysis error:", error);
-      alert("An error occurred. Please try again.");
+      showToast("An error occurred. Please try again.", "error");
     } finally {
       setIsAnalyzing(false);
     }
