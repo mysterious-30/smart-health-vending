@@ -1,60 +1,172 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { getUserCookie, clearUserCookie, setUserCookie } from "@/utils/cookies";
+import Link from "next/link";
 import {
-    ArrowLeft,
     User,
-    Globe,
     Bell,
+    MessageSquare,
+    Mail,
+    FileText,
+    AlertTriangle,
     Shield,
-    CreditCard,
-    HelpCircle,
-    LogOut,
-    Phone,
-    RefreshCw,
     Eye,
     Trash2,
-    FileText,
+    CreditCard,
     Download,
-    Mail,
-    MessageSquare,
-    AlertTriangle,
+    HelpCircle,
+    LogOut,
+    ArrowLeft,
+    CheckCircle,
+    X as XIcon,
+    RefreshCw,
+    Save,
+    Edit,
+    Globe
 } from "lucide-react";
-import Link from "next/link";
 
-export default function SettingsPage() {
+export default function HindiSettingsPage() {
     const router = useRouter();
-    const [profile, setProfile] = useState<{ fullName: string; uid: string; number: string; age: number | null; allergy: string | null } | null>(null);
+    const hasFetchedProfile = useRef(false);
 
+    const [profile, setProfile] = useState<{
+        fullName: string;
+        uid: string;
+        number: string | null;
+        age: number | null;
+        allergy: string | null;
+    } | null>(null);
+
+    const [editedProfile, setEditedProfile] = useState({
+        age: "",
+        allergy: "",
+        number: "",
+    });
+    const [isEditing, setIsEditing] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Notifications State
     const [smsAlerts, setSmsAlerts] = useState(true);
     const [emailReceipts, setEmailReceipts] = useState(true);
     const [monthlySummary, setMonthlySummary] = useState(false);
     const [emergencyAlerts, setEmergencyAlerts] = useState(true);
 
+    const currentDate = new Date().toLocaleDateString("hi-IN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+
     useEffect(() => {
+        // Prevent duplicate fetches in React StrictMode
+        if (hasFetchedProfile.current) return;
+
+        // Try to get profile from cookie first
+        const cachedProfile = getUserCookie();
+        if (cachedProfile) {
+            hasFetchedProfile.current = true;
+            setProfile({
+                fullName: cachedProfile.fullName,
+                uid: cachedProfile.uid,
+                number: cachedProfile.number || null,
+                age: cachedProfile.age || null,
+                allergy: cachedProfile.allergy || null
+            });
+            return; // Skip API call if we have cached data
+        }
+
+        // Fallback to local Session/Mock if no cookie
         const uid = sessionStorage.getItem("studentId");
         if (uid) {
-            fetch(`/api/student-profile?uid=${encodeURIComponent(uid)}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data.success) {
-                        setProfile({
-                            fullName: data.fullName,
-                            uid: data.uid,
-                            number: data.number,
-                            age: data.age,
-                            allergy: data.allergy
-                        });
-                    }
-                })
-                .catch((err) => console.error("Failed to fetch profile", err));
+            hasFetchedProfile.current = true;
+
+            // Mock Data
+            setProfile({
+                fullName: sessionStorage.getItem("studentFirstName") || "छात्र",
+                uid: uid,
+                number: "",
+                age: null,
+                allergy: null
+            });
         }
     }, []);
 
+    function handleEdit() {
+        if (profile) {
+            setEditedProfile({
+                age: profile.age?.toString() || "",
+                allergy: profile.allergy || "",
+                number: profile.number || "",
+            });
+            setIsEditing(true);
+            setSuccessMessage("");
+        }
+    }
+
+    function handleCancel() {
+        setIsEditing(false);
+        setEditedProfile({ age: "", allergy: "", number: "" });
+        setSuccessMessage("");
+    }
+
+    async function handleSave() {
+        if (!profile) return;
+
+        // Validate age
+        if (editedProfile.age && (isNaN(Number(editedProfile.age)) || Number(editedProfile.age) < 1)) {
+            alert("कृपया मान्य आयु दर्ज करें");
+            return;
+        }
+
+        setIsSaving(true);
+        setSuccessMessage("");
+
+        try {
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const updatedProfile = {
+                ...profile,
+                age: editedProfile.age ? Number(editedProfile.age) : null,
+                allergy: editedProfile.allergy || null,
+                number: editedProfile.number || null,
+            };
+
+            // Update local profile state
+            setProfile(updatedProfile);
+
+            // Update Cookie to persist changes
+            const currentCookie = getUserCookie();
+            setUserCookie({
+                uid: updatedProfile.uid,
+                fullName: updatedProfile.fullName,
+                name: currentCookie?.name || "छात्र", // Preserve first name if possible
+                age: updatedProfile.age,
+                allergy: updatedProfile.allergy,
+                number: updatedProfile.number || ""
+            });
+
+            setIsEditing(false);
+            setSuccessMessage("प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!");
+            setTimeout(() => setSuccessMessage(""), 3000);
+
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            alert("आपकी प्रोफ़ाइल अपडेट करते समय एक त्रुटि हुई");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
     function handleLogout() {
         if (confirm("क्या आप निश्चित रूप से लॉग आउट करना चाहते हैं?")) {
+            // Clear user cookie
+            clearUserCookie();
+
             // Clear session
             sessionStorage.clear();
             // Navigate to home or auth page
@@ -121,41 +233,99 @@ export default function SettingsPage() {
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">पंजीकृत मोबाइल नंबर</div>
-                                <div className="text-lg font-semibold text-white">{profile?.number || "लोड हो रहा है..."}</div>
+                                {isEditing ? (
+                                    <input
+                                        type="tel"
+                                        value={editedProfile.number}
+                                        onChange={(e) => setEditedProfile({ ...editedProfile, number: e.target.value })}
+                                        className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                                        placeholder="फोन नंबर दर्ज करें"
+                                    />
+                                ) : (
+                                    <div className="text-lg font-semibold text-white">{profile?.number || "लोड हो रहा है..."}</div>
+                                )}
                             </div>
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">सत्यापित किया गया</div>
-                                <div className="text-lg font-semibold text-white">{new Date().toLocaleString('hi-IN')}</div>
+                                <div className="text-lg font-semibold text-white">{currentDate || "लोड हो रहा है..."}</div>
                             </div>
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">उम्र</div>
-                                <div className="text-lg font-semibold text-white">{profile?.age || "लोड हो रहा है..."}</div>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        value={editedProfile.age}
+                                        onChange={(e) => setEditedProfile({ ...editedProfile, age: e.target.value })}
+                                        className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                                        placeholder="उम्र दर्ज करें"
+                                    />
+                                ) : (
+                                    <div className="text-lg font-semibold text-white">{profile?.age || "लोड हो रहा है..."}</div>
+                                )}
                             </div>
 
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                                 <div className="mb-2 text-sm text-slate-400">एलर्जी</div>
-                                <div className="text-lg font-semibold text-white">{profile?.allergy || "कोई नहीं"}</div>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editedProfile.allergy}
+                                        onChange={(e) => setEditedProfile({ ...editedProfile, allergy: e.target.value })}
+                                        className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                                        placeholder="एलर्जी दर्ज करें (यदि कोई हो)"
+                                    />
+                                ) : (
+                                    <div className="text-lg font-semibold text-white">{profile?.allergy || "कोई नहीं"}</div>
+                                )}
                             </div>
 
+                            {successMessage && (
+                                <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 p-4 text-emerald-400">
+                                    <CheckCircle className="h-5 w-5" />
+                                    <span>{successMessage}</span>
+                                </div>
+                            )}
+
                             <div className="flex gap-3">
-                                <motion.button
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <Phone className="h-4 w-4" />
-                                    फोन अपडेट करें
-                                </motion.button>
-                                <motion.button
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <RefreshCw className="h-4 w-4" />
-                                    जानकारी रिफ्रेश करें
-                                </motion.button>
+                                {isEditing ? (
+                                    <>
+                                        <motion.button
+                                            onClick={handleCancel}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:bg-white/10"
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <XIcon className="h-4 w-4" />
+                                            रद्द करें
+                                        </motion.button>
+                                        <motion.button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-cyan-500 px-4 py-3 font-medium text-white transition hover:bg-cyan-400 disabled:opacity-50"
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            {isSaving ? (
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Save className="h-4 w-4" />
+                                            )}
+                                            {isSaving ? "सहेज रहा है..." : "परिवर्तन सहेजें"}
+                                        </motion.button>
+                                    </>
+                                ) : (
+                                    <motion.button
+                                        onClick={handleEdit}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                        जानकारी संपादित करें
+                                    </motion.button>
+                                )}
                             </div>
                         </div>
                     </div>

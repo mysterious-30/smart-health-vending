@@ -1,65 +1,100 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
+import { getUserCookie, clearUserCookie, setUserCookie } from "@/utils/cookies";
+import Link from "next/link";
 import {
-  ArrowLeft,
   User,
-  Globe,
   Bell,
+  MessageSquare,
+  Mail,
+  FileText,
+  AlertTriangle,
   Shield,
-  CreditCard,
-  HelpCircle,
-  LogOut,
-  Phone,
-  RefreshCw,
   Eye,
   Trash2,
-  FileText,
+  CreditCard,
   Download,
-  Mail,
-  MessageSquare,
-  AlertTriangle,
-  Edit,
-  Save,
-  X as XIcon,
+  HelpCircle,
+  LogOut,
+  ArrowLeft,
   CheckCircle,
+  X as XIcon,
+  RefreshCw,
+  Save,
+  Edit,
+  Globe
 } from "lucide-react";
-import Link from "next/link";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
-  const [profile, setProfile] = useState<{ fullName: string; uid: string; number: string; age: number | null; allergy: string | null } | null>(null);
+  const hasFetchedProfile = useRef(false);
+
+  const [profile, setProfile] = useState<{
+    fullName: string;
+    uid: string;
+    number: string | null;
+    age: number | null;
+    allergy: string | null;
+  } | null>(null);
+
+  const [profileError, setProfileError] = useState("");
+  const [editedProfile, setEditedProfile] = useState({
+    age: "",
+    allergy: "",
+    number: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [emailReceipts, setEmailReceipts] = useState(true);
   const [monthlySummary, setMonthlySummary] = useState(false);
   const [emergencyAlerts, setEmergencyAlerts] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState<{ age: string; allergy: string; number: string }>({ age: "", allergy: "", number: "" });
-  const [isSaving, setIsSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   useEffect(() => {
+    // Prevent duplicate fetches in React StrictMode
+    if (hasFetchedProfile.current) return;
+
+    // Try to get profile from cookie first
+    const cachedProfile = getUserCookie();
+    if (cachedProfile) {
+      hasFetchedProfile.current = true;
+      setProfile({
+        fullName: cachedProfile.fullName,
+        uid: cachedProfile.uid,
+        number: cachedProfile.number || null,
+        age: cachedProfile.age || null,
+        allergy: cachedProfile.allergy || null
+      });
+      return; // Skip API call if we have cached data
+    }
+
+    // Fallback to local Session/Mock if no cookie
     const uid = sessionStorage.getItem("studentId");
     if (uid) {
-      fetch(`/api/student-profile?uid=${encodeURIComponent(uid)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setProfile({
-              fullName: data.fullName,
-              uid: data.uid,
-              number: data.number,
-              age: data.age,
-              allergy: data.allergy
-            });
-          }
-        })
-        .catch((err) => console.error("Failed to fetch profile", err));
+      hasFetchedProfile.current = true;
+      setProfileError("");
+
+      // Mock Data
+      setProfile({
+        fullName: sessionStorage.getItem("studentFirstName") || "Student User",
+        uid: uid,
+        number: "",
+        age: null,
+        allergy: null
+      });
     }
   }, []);
 
@@ -94,33 +129,34 @@ export default function SettingsPage() {
     setSuccessMessage("");
 
     try {
-      const response = await fetch("/api/update-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: profile.uid,
-          age: editedProfile.age ? Number(editedProfile.age) : null,
-          allergy: editedProfile.allergy || null,
-          number: editedProfile.number || null,
-        }),
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const updatedProfile = {
+        ...profile,
+        age: editedProfile.age ? Number(editedProfile.age) : null,
+        allergy: editedProfile.allergy || null,
+        number: editedProfile.number || null,
+      };
+
+      // Update local profile state
+      setProfile(updatedProfile);
+
+      // Update Cookie to persist changes
+      const currentCookie = getUserCookie();
+      setUserCookie({
+        uid: updatedProfile.uid,
+        fullName: updatedProfile.fullName,
+        name: currentCookie?.name || "Student", // Preserve first name if possible
+        age: updatedProfile.age,
+        allergy: updatedProfile.allergy,
+        number: updatedProfile.number || ""
       });
 
-      const data = await response.json();
+      setIsEditing(false);
+      setSuccessMessage("Profile updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
 
-      if (data.success) {
-        // Update local profile state
-        setProfile({
-          ...profile,
-          age: editedProfile.age ? Number(editedProfile.age) : null,
-          allergy: editedProfile.allergy || null,
-          number: editedProfile.number || "",
-        });
-        setIsEditing(false);
-        setSuccessMessage("Profile updated successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } else {
-        alert(data.message || "Failed to update profile");
-      }
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("An error occurred while updating your profile");
@@ -131,6 +167,9 @@ export default function SettingsPage() {
 
   function handleLogout() {
     if (confirm("Are you sure you want to log out?")) {
+      // Clear user cookie
+      clearUserCookie();
+
       // Clear session
       sessionStorage.clear();
       // Navigate to home or auth page
@@ -184,6 +223,14 @@ export default function SettingsPage() {
               <h2 className="text-xl font-semibold text-white"> {"Your Profile"}</h2>
             </div>
 
+            {/* Error Message */}
+            {profileError && (
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 p-4 text-red-300">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <span>{profileError}</span>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-2 text-sm text-slate-400">{"Name"}</div>
@@ -197,43 +244,101 @@ export default function SettingsPage() {
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-2 text-sm text-slate-400">{"Phone Number"}</div>
-                <div className="text-lg font-semibold text-white">
-                  {profile?.number ? profile.number : profile ? "Not Registered" : "Loading..."}
-                </div>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    value={editedProfile.number}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, number: e.target.value })}
+                    className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    placeholder="Enter phone number"
+                  />
+                ) : (
+                  <div className="text-lg font-semibold text-white">
+                    {profile?.number ? profile.number : profile ? "Not Registered" : "Loading..."}
+                  </div>
+                )}
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-2 text-sm text-slate-400">{"Age"}</div>
-                <div className="text-lg font-semibold text-white">{profile?.age || "Loading..."}</div>
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={editedProfile.age}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, age: e.target.value })}
+                    className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    placeholder="Enter age"
+                  />
+                ) : (
+                  <div className="text-lg font-semibold text-white">{profile?.age || "Not Set"}</div>
+                )}
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-2 text-sm text-slate-400">{"Allergy"}</div>
-                <div className="text-lg font-semibold text-white">{profile?.allergy || "None"}</div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedProfile.allergy}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, allergy: e.target.value })}
+                    className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    placeholder="Enter allergies (if any)"
+                  />
+                ) : (
+                  <div className="text-lg font-semibold text-white">{profile?.allergy || "None"}</div>
+                )}
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-2 text-sm text-slate-400">{"Verified On"}</div>
-                <div className="text-lg font-semibold text-white">{new Date().toLocaleString('en-US')}</div>
+                <div className="text-lg font-semibold text-white">{currentDate || "Loading..."}</div>
               </div>
 
+              {successMessage && (
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 p-4 text-emerald-400">
+                  <CheckCircle className="h-5 w-5" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
               <div className="flex gap-3">
-                <motion.button
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Phone className="h-4 w-4" />
-                  {"Update Phone Number"}
-                </motion.button>
-                <motion.button
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  {"Refresh Student Info"}
-                </motion.button>
+                {isEditing ? (
+                  <>
+                    <motion.button
+                      onClick={handleCancel}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:bg-white/10"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <XIcon className="h-4 w-4" />
+                      {"Cancel"}
+                    </motion.button>
+                    <motion.button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-full bg-cyan-500 px-4 py-3 font-medium text-white transition hover:bg-cyan-400 disabled:opacity-50"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {isSaving ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </motion.button>
+                  </>
+                ) : (
+                  <motion.button
+                    onClick={handleEdit}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-3 font-medium text-slate-300 transition hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Edit className="h-4 w-4" />
+                    {"Edit Information"}
+                  </motion.button>
+                )}
               </div>
             </div>
           </div>
@@ -532,7 +637,7 @@ export default function SettingsPage() {
               <div>
                 <h2 className="text-xl font-semibold text-white">🔄 {"Logout Section"}</h2>
                 <p className="text-sm text-slate-400">
-                  {"For security, you're auto-logged out after inactivity."}
+                  {"For security, you&apos;re auto-logged out after inactivity."}
                 </p>
               </div>
             </div>

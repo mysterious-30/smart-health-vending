@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { BrowserMultiFormatReader } from "@zxing/library";
 import {
     CheckCircle2,
     XCircle,
@@ -15,6 +14,8 @@ import {
     Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
+import { setUserCookie } from "@/utils/cookies";
 
 type AuthStatus =
     | "idle"
@@ -28,6 +29,7 @@ type AuthStatus =
 
 export default function HindiAuthPage() {
     const router = useRouter();
+    const { refreshLanguage } = useLanguage();
     const [status, setStatus] = useState<AuthStatus>("idle");
     const [message, setMessage] = useState("");
     const [userName, setUserName] = useState("छात्र");
@@ -39,7 +41,6 @@ export default function HindiAuthPage() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const scanFrameRef = useRef<HTMLDivElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Function to stop camera and cleanup
@@ -53,12 +54,9 @@ export default function HindiAuthPage() {
         if (videoRef.current) {
             videoRef.current.srcObject = null;
         }
-        codeReaderRef.current?.reset();
     }
 
     useEffect(() => {
-        codeReaderRef.current = new BrowserMultiFormatReader();
-
         // Cleanup on unmount
         return () => {
             stopCamera();
@@ -180,76 +178,33 @@ export default function HindiAuthPage() {
         setVerificationFailed(false);
 
         try {
-            // Send to API route
-            if (!capturedImage) {
-                setMessage("कोई फोटो डेटा उपलब्ध नहीं है।");
-                return;
-            }
+            // Simulate network delay for demo
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-            const base64Image = capturedImage.split(",")[1];
+            // Mock Success Response
+            const mockBarcode = "STU12345678";
+            const mockName = "छात्र";
 
-            const response = await fetch("/api/read-barcode", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    image: base64Image,
-                }),
-            });
+            const mockProfile = {
+                success: true,
+                barcode: mockBarcode,
+                name: mockName,
+                uid: mockBarcode,
+                fullName: "डेमो छात्र",
+                age: 20,
+                allergy: "कोई नहीं",
+                number: "9876543210"
+            };
 
-            if (!response.ok) {
-                let errorData: { message?: string; error?: string; details?: unknown } = {};
-                try {
-                    errorData = await response.json();
-                } catch (e) {
-                    console.error("Failed to parse error response:", e);
-                    errorData = {
-                        message: `सर्वर त्रुटि (${response.status})`,
-                        error: response.statusText || "अज्ञात त्रुटि"
-                    };
-                }
+            await handleVerificationSuccess(mockBarcode, mockName, mockProfile);
 
-                console.error("Barcode API error:", {
-                    status: response.status,
-                    error: errorData.error,
-                    message: errorData.message,
-                    details: errorData.details
-                });
-
-                // Show user-friendly error message
-                const userMessage = errorData.message || errorData.error || "सत्यापन विफल। कृपया पुनः प्रयास करें।";
-                handleVerificationFail(userMessage);
-                return;
-            }
-
-            const data = await response.json();
-
-            if (data.success && data.barcode) {
-                handleVerificationSuccess(data.barcode, data.firstName);
-            } else {
-                handleVerificationFail(data.message || "डेटाबेस में छात्र आईडी नहीं मिली।");
-            }
         } catch (error) {
             console.error("Error submitting image:", error);
-
-            let errorMessage = "नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।";
-
-            if (error instanceof Error) {
-                if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-                    errorMessage = "सत्यापन सेवा से कनेक्ट नहीं हो सका। कृपया सुनिश्चित करें कि बैकएंड चल रहा है।";
-                } else if (error.message.includes("timeout") || error.message.includes("aborted")) {
-                    errorMessage = "अनुरोध का समय समाप्त हो गया। कृपया पुनः प्रयास करें।";
-                } else {
-                    errorMessage = `त्रुटि: ${error.message}`;
-                }
-            }
-
-            handleVerificationFail(errorMessage);
+            handleVerificationFail("डेमो सत्यापन के दौरान एक अप्रत्याशित त्रुटि हुई।");
         }
     }
 
-    function handleVerificationSuccess(barcodeText: string, firstName?: string | null) {
+    async function handleVerificationSuccess(barcodeText: string, name?: string | null, profileData?: Record<string, unknown>) {
         // Stop camera before showing success animation
         stopCamera();
 
@@ -257,8 +212,8 @@ export default function HindiAuthPage() {
         setMessage("सत्यापन सफल!");
         setShowVerifiedAnimation(true);
         setVerificationFailed(false);
-        // Use first name from backend, or fallback to "Student" if not available
-        setUserName(firstName || "छात्र");
+        // Use name from backend, or fallback to "Student" if not available
+        setUserName(name || "छात्र");
 
         // Navigate to dashboard after animation
         setTimeout(async () => {
@@ -267,9 +222,23 @@ export default function HindiAuthPage() {
 
             if (typeof window !== "undefined") {
                 sessionStorage.setItem("studentId", barcodeText);
-                if (firstName) {
-                    sessionStorage.setItem("studentFirstName", firstName);
+                if (name) {
+                    sessionStorage.setItem("studentFirstName", name);
                 }
+
+                // Store profile in cookie if we have full data from barcode response
+                if (profileData && profileData.fullName) {
+                    setUserCookie({
+                        uid: (profileData.uid as string) || barcodeText,
+                        fullName: profileData.fullName as string,
+                        name: name || "छात्र",
+                        age: profileData.age as number | null,
+                        allergy: profileData.allergy as string | null,
+                        number: (profileData.number as string) || ""
+                    });
+                }
+                // Refresh language context to pick up user preference
+                await refreshLanguage();
             }
             router.push("/hi/dashboard");
         }, 2500);
@@ -290,18 +259,17 @@ export default function HindiAuthPage() {
         setStatus("idle");
         setMessage("");
         setVerificationFailed(false);
-        startCamera();
     }
 
     function handleDevBypass() {
-        setShowVerifiedAnimation(true);
-        setStatus("success");
-        setMessage("सत्यापन सफल!");
-        setUserName("Developer");
-
-        setTimeout(() => {
-            router.push("/hi/dashboard");
-        }, 2500);
+        handleVerificationSuccess("DEMO-JURY-BYPASS", "जूरी सदस्य", {
+            uid: "DEMO-JURY-BYPASS",
+            fullName: "जूरी सदस्य",
+            name: "जूरी सदस्य",
+            age: 0,
+            allergy: "कोई नहीं",
+            number: "0000000000"
+        });
     }
 
     function handleDevUpload() {
@@ -352,26 +320,36 @@ export default function HindiAuthPage() {
                 aria-label="Upload Student ID image"
             />
 
-            {/* Dev Upload Button - Bottom left corner */}
-            <button
-                onClick={handleDevUpload}
-                className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-full bg-blue-500/20 border border-blue-500/40 px-3 py-2 opacity-20 transition-all hover:opacity-100 hover:scale-110 hover:bg-blue-500/40"
-                aria-label="Developer upload"
-                title="Dev Upload - Upload ID image for testing"
-            >
-                <Upload className="h-4 w-4 text-blue-400" />
-                <span className="text-xs text-blue-400 font-bold">UPLOAD</span>
-            </button>
 
-            {/* Hidden Dev Bypass Button - Bottom right corner (hover to see) */}
-            <button
-                onClick={handleDevBypass}
-                className="fixed bottom-4 right-4 z-50 h-10 w-10 rounded-full bg-red-500/20 border border-red-500/40 opacity-20 transition-all hover:opacity-100 hover:scale-110 hover:bg-red-500/40"
-                aria-label="Developer bypass"
-                title="Dev Bypass - Click to skip authentication"
-            >
-                <span className="text-xs text-red-400 font-bold">DEV</span>
-            </button>
+
+            {/* Demo Bypass Button - Visible for Jury Presentation */}
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+                <motion.div
+                    className="rounded-lg bg-amber-500/20 border border-amber-500/40 px-3 py-1.5 backdrop-blur-sm"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1, duration: 0.5 }}
+                >
+                    <p className="text-xs text-amber-200 font-medium">
+                        👇 जूरी के लिए: प्रमाणीकरण छोड़ें
+                    </p>
+                </motion.div>
+                <motion.button
+                    onClick={handleDevBypass}
+                    className="group relative overflow-hidden rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 shadow-lg shadow-amber-500/50 transition-all hover:shadow-xl hover:shadow-amber-500/60 hover:scale-105"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 1.2, duration: 0.5 }}
+                >
+                    <span className="relative z-10 flex items-center gap-2 text-sm font-bold text-white">
+                        <Shield className="h-4 w-4" />
+                        डेमो बायपास
+                    </span>
+                    <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
+                </motion.button>
+            </div>
 
             {/* Verification Animation Overlay */}
             <AnimatePresence>
@@ -496,6 +474,25 @@ export default function HindiAuthPage() {
             </AnimatePresence>
 
             <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-8 sm:px-6 lg:px-8">
+                {/* Jury Information Banner */}
+                <motion.div
+                    className="mb-6 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-orange-500/20 p-4 backdrop-blur-sm"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/30">
+                            <AlertCircle className="h-5 w-5 text-amber-300" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="mb-1 font-semibold text-amber-200">प्रोटोटाइप डेमो मोड</h3>
+                            <p className="text-sm text-amber-100/90">
+                                <strong>जूरी सदस्यों के लिए:</strong> आप प्रमाणीकरण प्रक्रिया को छोड़ने के लिए <strong>&quot;डेमो बायपास&quot;</strong> बटन (निचले-दाएं कोने) का उपयोग कर सकते हैं।
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
                 {/* Header */}
                 <motion.header
                     className="mb-8 flex items-center gap-4"
@@ -569,15 +566,41 @@ export default function HindiAuthPage() {
                                             animate={{ opacity: 1 }}
                                         >
                                             <div className="space-y-4">
-                                                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-cyan-400/40 bg-cyan-400/10">
-                                                    <Camera className="h-10 w-10 text-cyan-400" />
+                                                <div className="flex items-center justify-center gap-6">
+                                                    {/* Camera Button */}
+                                                    <motion.button
+                                                        onClick={startCamera}
+                                                        className="group flex flex-col items-center gap-2 transition-transform"
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                    >
+                                                        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-cyan-400/40 bg-cyan-400/10 transition-all group-hover:border-cyan-400/70 group-hover:bg-cyan-400/20 group-hover:shadow-lg group-hover:shadow-cyan-400/30">
+                                                            <Camera className="h-10 w-10 text-cyan-400 transition-transform group-hover:scale-110" />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-slate-300 group-hover:text-cyan-300">कैमरा</p>
+                                                    </motion.button>
+
+                                                    <div className="text-slate-500">या</div>
+
+                                                    {/* Upload Button */}
+                                                    <motion.button
+                                                        onClick={handleDevUpload}
+                                                        className="group flex flex-col items-center gap-2 transition-transform"
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                    >
+                                                        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-purple-400/40 bg-purple-400/10 transition-all group-hover:border-purple-400/70 group-hover:bg-purple-400/20 group-hover:shadow-lg group-hover:shadow-purple-400/30">
+                                                            <Upload className="h-10 w-10 text-purple-400 transition-transform group-hover:scale-110" />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-slate-300 group-hover:text-purple-300">अपलोड</p>
+                                                    </motion.button>
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-slate-200">
-                                                        कैमरा शुरू करने के लिए तैयार
+                                                        अपना आईडी कार्ड स्कैन या अपलोड करें
                                                     </p>
                                                     <p className="mt-1 text-sm text-slate-400">
-                                                        अपने आईडी कार्ड को फ्रेम में रखें
+                                                        कैमरा से स्कैन करें या गैलरी से फोटो चुनें
                                                     </p>
                                                 </div>
                                             </div>
@@ -670,7 +693,7 @@ export default function HindiAuthPage() {
                             <div className="mb-6 space-y-3 text-sm text-slate-300">
                                 <div className="flex items-start gap-2">
                                     <span className="mt-0.5 text-cyan-400">1.</span>
-                                    <span>&apos;स्कैन करें&apos; पर टैप करें और कैमरा अनुमति दें।</span>
+                                    <span>&apos;कैमरा से स्कैन करें&apos; या &apos;फोटो अपलोड करें&apos; चुनें।</span>
                                 </div>
                                 <div className="flex items-start gap-2">
                                     <span className="mt-0.5 text-cyan-400">2.</span>
@@ -710,21 +733,6 @@ export default function HindiAuthPage() {
 
                             {/* Action Buttons */}
                             <div className="space-y-3">
-                                {status === "idle" && (
-                                    <motion.button
-                                        onClick={startCamera}
-                                        className="group relative w-full overflow-hidden rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-sky-500/40 transition"
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        <span className="relative z-10 flex items-center justify-center gap-2">
-                                            <Camera className="h-5 w-5" />
-                                            स्कैन करें
-                                        </span>
-                                        <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
-                                    </motion.button>
-                                )}
-
                                 {status === "ready" && (
                                     <motion.button
                                         onClick={captureImage}

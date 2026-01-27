@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
     Stethoscope,
     ShoppingCart,
@@ -24,6 +25,7 @@ const quickBuyItems = [
 ];
 
 export default function HindiDashboardPage() {
+    const prefersReducedMotion = useReducedMotion();
     const [studentName, setStudentName] = useState("छात्र");
     const [isLoadingName, setIsLoadingName] = useState(true);
     const [nameError, setNameError] = useState("");
@@ -73,52 +75,21 @@ export default function HindiDashboardPage() {
         const storedName = sessionStorage.getItem("studentFirstName");
         if (storedName) {
             setStudentName(storedName);
-            setIsLoadingName(false);
-            return;
-        }
-
-        const storedId = sessionStorage.getItem("studentId");
-        if (!storedId) {
-            setIsLoadingName(false);
-            return;
-        }
-
-        const controller = new AbortController();
-
-        const fetchStudentName = async () => {
-            try {
-                setIsLoadingName(true);
-                setNameError("");
-
-                const response = await fetch(
-                    `/api/student-profile/${encodeURIComponent(storedId)}`,
-                    { signal: controller.signal }
-                );
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || "डेटा प्राप्त करने में विफल");
+        } else {
+            // Fallback for demo if not set
+            const fullProfile = sessionStorage.getItem("studentProfile");
+            if (fullProfile) {
+                try {
+                    const parsed = JSON.parse(fullProfile);
+                    setStudentName(parsed.name || "छात्र");
+                } catch (e) {
+                    setStudentName("छात्र");
                 }
-
-                const data = await response.json();
-                if (data.firstName) {
-                    setStudentName(data.firstName);
-                    sessionStorage.setItem("studentFirstName", data.firstName);
-                } else if (data.success === false) {
-                    setNameError("छात्र नहीं मिला");
-                }
-            } catch (error) {
-                if (error instanceof Error && error.name === "AbortError") return;
-                console.error("Failed to fetch student name:", error);
-                setNameError("डेटा प्राप्त करने में विफल");
-            } finally {
-                setIsLoadingName(false);
+            } else {
+                setStudentName("छात्र");
             }
-        };
-
-        fetchStudentName();
-
-        return () => controller.abort();
+        }
+        setIsLoadingName(false);
     }, []);
 
     return (
@@ -130,9 +101,9 @@ export default function HindiDashboardPage() {
                 {/* Header */}
                 <motion.header
                     className="mb-8"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5 }}
                 >
                     <motion.div
                         className="mb-6 flex items-center gap-3"
@@ -175,10 +146,10 @@ export default function HindiDashboardPage() {
                         <motion.div
                             key={section.title}
                             className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8 transition hover:border-cyan-300/50"
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                            whileHover={{ y: -4 }}
+                            initial={prefersReducedMotion ? {} : { opacity: 0, y: 30 }}
+                            animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.3 + index * 0.1 }}
+                            whileHover={prefersReducedMotion ? {} : { y: -4 }}
                         >
                             <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
                                 {/* Icon */}

@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Package,
   TrendingUp,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -34,71 +35,71 @@ interface Product {
 }
 
 const recommendedProducts: Product[] = [
-  { id: "rec1", name: "prod.bandage", price: 10, stock: 15, category: "cat.wound" },
-  { id: "rec2", name: "prod.cotton", price: 5, stock: 8, stockStatus: "quickbuy.stock.low", category: "cat.wound" },
-  { id: "rec3", name: "prod.pain", price: 5, stock: 20, category: "cat.pain" },
-  { id: "rec4", name: "prod.wipes", price: 8, stock: 3, stockStatus: "quickbuy.stock.left", category: "cat.wound" },
+  { id: "rec1", name: "Adhesive Bandages (Pack of 10)", price: 10, stock: 15, category: "cat.wound" },
+  { id: "rec2", name: "Cotton Balls (50g)", price: 5, stock: 8, stockStatus: "Low Stock", category: "cat.wound" },
+  { id: "rec3", name: "Pain Relief Gel", price: 5, stock: 20, category: "cat.pain" },
+  { id: "rec4", name: "Antiseptic Wipes", price: 8, stock: 3, category: "cat.wound" },
 ];
 
 const woundCareProducts: Product[] = [
-  { id: "wc1", name: "prod.liquid", price: 25, stock: 12, category: "cat.wound" },
-  { id: "wc2", name: "prod.gauze", price: 15, stock: 10, category: "cat.wound" },
-  { id: "wc3", name: "prod.tape", price: 12, stock: 5, stockStatus: "quickbuy.stock.low", category: "cat.wound" },
-  { id: "wc4", name: "prod.heavy", price: 20, stock: 8, category: "cat.wound" },
-  { id: "wc5", name: "prod.burn", price: 30, stock: 6, stockStatus: "quickbuy.stock.low", category: "cat.wound" },
-  { id: "wc6", name: "prod.joint", price: 45, stock: 4, stockStatus: "quickbuy.stock.left", category: "cat.wound" },
+  { id: "wc1", name: "Antiseptic Liquid", price: 25, stock: 12, category: "cat.wound" },
+  { id: "wc2", name: "Sterile Gauze Pads", price: 15, stock: 10, category: "cat.wound" },
+  { id: "wc3", name: "Medical Tape", price: 12, stock: 5, stockStatus: "Low Stock", category: "cat.wound" },
+  { id: "wc4", name: "Heavy Duty Bandages", price: 20, stock: 8, category: "cat.wound" },
+  { id: "wc5", name: "Burn Relief Cream", price: 30, stock: 6, stockStatus: "Low Stock", category: "cat.wound" },
+  { id: "wc6", name: "Joint Support Wrap", price: 45, stock: 4, category: "cat.wound" },
 ];
 
 const feverPainProducts: Product[] = [
-  { id: "fp1", name: "prod.para", price: 8, stock: 25, category: "cat.pain" },
-  { id: "fp2", name: "prod.ibu", price: 10, stock: 20, category: "cat.pain" },
-  { id: "fp3", name: "prod.ors", price: 15, stock: 18, category: "cat.pain" },
-  { id: "fp4", name: "prod.elec", price: 25, stock: 12, category: "cat.pain" },
-  { id: "fp5", name: "prod.spray", price: 35, stock: 7, stockStatus: "quickbuy.stock.low", category: "cat.pain" },
+  { id: "fp1", name: "Paracetamol (500mg)", price: 8, stock: 25, category: "cat.pain" },
+  { id: "fp2", name: "Ibuprofen (400mg)", price: 10, stock: 20, category: "cat.pain" },
+  { id: "fp3", name: "ORS Sachets (Pack of 5)", price: 15, stock: 18, category: "cat.pain" },
+  { id: "fp4", name: "Electrolyte Drink", price: 25, stock: 12, category: "cat.pain" },
+  { id: "fp5", name: "Pain Relief Spray", price: 35, stock: 7, stockStatus: "Low Stock", category: "cat.pain" },
 ];
 
 const hygieneProducts: Product[] = [
-  { id: "hy1", name: "prod.sani", price: 40, stock: 15, category: "cat.hygiene" },
-  { id: "hy2", name: "prod.tissues", price: 20, stock: 10, category: "cat.hygiene" },
-  { id: "hy3", name: "prod.wetwipes", price: 30, stock: 8, category: "cat.hygiene" },
-  { id: "hy4", name: "prod.pads", price: 45, stock: 12, category: "cat.hygiene" },
-  { id: "hy5", name: "prod.mask", price: 15, stock: 20, category: "cat.hygiene" },
-  { id: "hy6", name: "prod.gloves", price: 25, stock: 9, stockStatus: "quickbuy.stock.low", category: "cat.hygiene" },
+  { id: "hy1", name: "Hand Sanitizer (100ml)", price: 40, stock: 15, category: "cat.hygiene" },
+  { id: "hy2", name: "Tissue Box", price: 20, stock: 10, category: "cat.hygiene" },
+  { id: "hy3", name: "Wet Wipes", price: 30, stock: 8, category: "cat.hygiene" },
+  { id: "hy4", name: "Sanitary Pads", price: 45, stock: 12, category: "cat.hygiene" },
+  { id: "hy5", name: "Face Masks (Pack of 10)", price: 15, stock: 20, category: "cat.hygiene" },
+  { id: "hy6", name: "Disposable Gloves", price: 25, stock: 9, stockStatus: "Low Stock", category: "cat.hygiene" },
 ];
 
 const seasonalProducts: Product[] = [
-  { id: "se1", name: "prod.sun", price: 20, stock: 10, category: "cat.seasonal" },
-  { id: "se2", name: "prod.mosq", price: 35, stock: 8, category: "cat.seasonal" },
-  { id: "se3", name: "prod.cream", price: 50, stock: 6, stockStatus: "quickbuy.stock.low", category: "cat.seasonal" },
-  { id: "se4", name: "prod.balm", price: 25, stock: 12, category: "cat.seasonal" },
+  { id: "se1", name: "Sunscreen SPF 50", price: 20, stock: 10, category: "cat.seasonal" },
+  { id: "se2", name: "Mosquito Repellent", price: 35, stock: 8, category: "cat.seasonal" },
+  { id: "se3", name: "Moisturizing Cream", price: 50, stock: 6, stockStatus: "Low Stock", category: "cat.seasonal" },
+  { id: "se4", name: "Cooling Balm", price: 25, stock: 12, category: "cat.seasonal" },
 ];
 
 const bundles = [
   {
     id: "bundle1",
-    name: "bundle.kit",
-    description: "bundle.desc.kit",
+    name: "First Aid Kit",
+    description: "Complete emergency kit for minor injuries",
     price: 50,
     originalPrice: 60,
-    items: ["prod.bandage", "prod.gauze", "prod.cotton", "prod.liquid"],
+    items: ["Adhesive Bandages", "Sterile Gauze Pads", "Cotton Balls", "Antiseptic Liquid"],
     stock: 10,
   },
   {
     id: "bundle2",
-    name: "bundle.exam",
-    description: "bundle.desc.exam",
+    name: "Exam Stress Relief Bundle",
+    description: "Stay hydrated and pain-free during exams",
     price: 30,
     originalPrice: 40,
-    items: ["prod.ors", "prod.para"],
+    items: ["ORS Sachets", "Paracetamol"],
     stock: 15,
   },
   {
     id: "bundle3",
-    name: "bundle.sports",
-    description: "bundle.desc.sports",
+    name: "Sports Injury Kit",
+    description: "Essential items for active students",
     price: 100,
     originalPrice: 120,
-    items: ["prod.joint", "prod.heavy", "prod.spray"],
+    items: ["Joint Support Wrap", "Heavy Duty Bandages", "Pain Relief Spray"],
     stock: 5,
   },
 ];
@@ -110,6 +111,10 @@ export default function QuickBuyPage() {
   const [showCart, setShowCart] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "Cash" | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [orderId, setOrderId] = useState<string>("");
+  const [orderTotal, setOrderTotal] = useState<number>(0);
+  const [orderPaymentMethod, setOrderPaymentMethod] = useState<string>("");
 
   function addToCart(product: Product) {
     if (product.stock === 0) return;
@@ -160,10 +165,23 @@ export default function QuickBuyPage() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  function generateOrderId(): string {
+    return `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  }
+
+  function completePurchase() {
+    const newOrderId = generateOrderId();
+    setOrderId(newOrderId);
+    setOrderTotal(total);
+    setOrderPaymentMethod(paymentMethod || "");
+    setShowOrderConfirmation(true);
+    setCart([]);
+    setShowCart(false);
+    setShowCheckout(false);
+    setPaymentMethod(null);
+  }
+
   function getStockStatus(product: Product): string {
-    if (product.stockStatus === "quickbuy.stock.left") {
-      return `Only ${product.stock} left`;
-    }
     if (product.stockStatus) return product.stockStatus;
     if (product.stock <= 3) return `Only ${product.stock} left`;
     if (product.stock <= 5) return "Low Stock";
@@ -260,15 +278,40 @@ export default function QuickBuyPage() {
                       {getStockStatus(product)}
                     </span>
                   </div>
-                  <motion.button
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock === 0}
-                    className="w-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={product.stock > 0 ? { scale: 1.05 } : {}}
-                    whileTap={product.stock > 0 ? { scale: 0.95 } : {}}
-                  >
-                    {"Add to Cart"}
-                  </motion.button>
+                  {cart.find((item) => item.id === product.id) ? (
+                    <div className="flex items-center justify-center gap-3 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-4 py-2">
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, -1)}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </motion.button>
+                      <span className="min-w-[2rem] text-center text-sm font-bold text-white">
+                        {cart.find((item) => item.id === product.id)?.quantity || 0}
+                      </span>
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, 1)}
+                        disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0}
+                      className="w-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={product.stock > 0 ? { scale: 1.05 } : {}}
+                      whileTap={product.stock > 0 ? { scale: 0.95 } : {}}
+                    >
+                      {"Add to Cart"}
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -306,15 +349,40 @@ export default function QuickBuyPage() {
                       </span>
                     </div>
                   </div>
-                  <motion.button
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock === 0}
-                    className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                    whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                    whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </motion.button>
+                  {cart.find((item) => item.id === product.id) ? (
+                    <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, -1)}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </motion.button>
+                      <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                        {cart.find((item) => item.id === product.id)?.quantity || 0}
+                      </span>
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, 1)}
+                        disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0}
+                      className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                      whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                      whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -359,15 +427,40 @@ export default function QuickBuyPage() {
                       </span>
                     </div>
                   </div>
-                  <motion.button
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock === 0}
-                    className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                    whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                    whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </motion.button>
+                  {cart.find((item) => item.id === product.id) ? (
+                    <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, -1)}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </motion.button>
+                      <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                        {cart.find((item) => item.id === product.id)?.quantity || 0}
+                      </span>
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, 1)}
+                        disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0}
+                      className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                      whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                      whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -405,15 +498,40 @@ export default function QuickBuyPage() {
                       </span>
                     </div>
                   </div>
-                  <motion.button
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock === 0}
-                    className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                    whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                    whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </motion.button>
+                  {cart.find((item) => item.id === product.id) ? (
+                    <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, -1)}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </motion.button>
+                      <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                        {cart.find((item) => item.id === product.id)?.quantity || 0}
+                      </span>
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, 1)}
+                        disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0}
+                      className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                      whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                      whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -454,15 +572,40 @@ export default function QuickBuyPage() {
                       </span>
                     </div>
                   </div>
-                  <motion.button
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock === 0}
-                    className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                    whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                    whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </motion.button>
+                  {cart.find((item) => item.id === product.id) ? (
+                    <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, -1)}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </motion.button>
+                      <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                        {cart.find((item) => item.id === product.id)?.quantity || 0}
+                      </span>
+                      <motion.button
+                        onClick={() => updateQuantity(product.id, 1)}
+                        disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                        className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0}
+                      className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                      whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                      whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -506,14 +649,39 @@ export default function QuickBuyPage() {
                       ₹{bundle.originalPrice}
                     </span>
                   </div>
-                  <motion.button
-                    onClick={() => addBundleToCart(bundle)}
-                    className="w-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 px-4 py-2 font-semibold text-white"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {"Buy Bundle"}
-                  </motion.button>
+                  {cart.find((item) => item.id === bundle.id) ? (
+                    <div className="flex items-center justify-center gap-3 rounded-full border-2 border-purple-400 bg-purple-400/10 px-4 py-2">
+                      <motion.button
+                        onClick={() => updateQuantity(bundle.id, -1)}
+                        className="rounded-full bg-white/10 p-1 text-purple-400 transition hover:bg-white/20"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </motion.button>
+                      <span className="min-w-[2rem] text-center text-sm font-bold text-white">
+                        {cart.find((item) => item.id === bundle.id)?.quantity || 0}
+                      </span>
+                      <motion.button
+                        onClick={() => updateQuantity(bundle.id, 1)}
+                        disabled={cart.find((item) => item.id === bundle.id)!.quantity >= bundle.stock}
+                        className="rounded-full bg-white/10 p-1 text-purple-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      onClick={() => addBundleToCart(bundle)}
+                      className="w-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 px-4 py-2 font-semibold text-white"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {"Buy Bundle"}
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -654,13 +822,7 @@ export default function QuickBuyPage() {
 
                         {paymentMethod && (
                           <motion.button
-                            onClick={() => {
-                              alert(`Payment of ₹${total} via ${paymentMethod} completed!`);
-                              setCart([]);
-                              setShowCart(false);
-                              setShowCheckout(false);
-                              setPaymentMethod(null);
-                            }}
+                            onClick={completePurchase}
                             className="w-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 px-6 py-3 font-semibold text-white shadow-lg"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -675,6 +837,65 @@ export default function QuickBuyPage() {
                   </div>
                 </>
               )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Order Confirmation Modal */}
+      <AnimatePresence>
+        {showOrderConfirmation && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowOrderConfirmation(false)}
+            />
+            <motion.div
+              className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border-2 border-green-500/40 bg-gradient-to-br from-slate-900/95 to-slate-800/95 p-8 shadow-2xl"
+              initial={{ scale: 0.8, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.8, y: 30, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <motion.div
+                className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 ring-4 ring-green-500/30"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2, type: "spring", damping: 15 }}
+              >
+                <CheckCircle2 className="h-10 w-10 text-green-400" />
+              </motion.div>
+              <h2 className="mb-2 text-center text-2xl font-bold text-white">Order Confirmed!</h2>
+              <p className="mb-6 text-center text-sm text-slate-400">Your purchase has been completed successfully</p>
+              <div className="mb-6 space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Order ID:</span>
+                  <span className="font-mono text-sm font-semibold text-cyan-400">{orderId}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Payment Method:</span>
+                  <span className="text-sm font-semibold text-white">{orderPaymentMethod}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-white/10 pt-3">
+                  <span className="text-base font-semibold text-white">Total Paid:</span>
+                  <span className="text-xl font-bold text-green-400">₹{orderTotal}</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <motion.button
+                  onClick={() => setShowOrderConfirmation(false)}
+                  className="flex-1 rounded-full border-2 border-green-500/30 bg-green-500/10 px-6 py-3 font-semibold text-green-300 transition hover:border-green-500/50 hover:bg-green-500/20"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Done
+                </motion.button>
+              </div>
+              <p className="mt-4 text-center text-xs text-slate-500">Please collect your items from the vending machine</p>
             </motion.div>
           </>
         )}

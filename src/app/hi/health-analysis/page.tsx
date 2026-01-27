@@ -12,20 +12,86 @@ import {
     ArrowLeft,
     Loader2,
     Stethoscope,
+    Pill,
+    ShoppingBag,
+    Activity,
+    FileText,
+    CreditCard,
+    Rocket,
 } from "lucide-react";
 import Link from "next/link";
 
-type SeverityLevel = "Low" | "Moderate" | "High";
-type Category = "Cut" | "Rash" | "Burn" | "Swelling" | "Skin Irritation" | "Fever" | "Sprain" | "Other";
-
 interface AISuggestion {
-    category: Category;
-    confidence: number;
-    severity: SeverityLevel;
-    needsDoctor: boolean;
-    suggestedItems: string[];
+    diagnosis: string;
+    medication: string;
+    prevention: string;
+    vendingitems: string;
+    raw?: string;
 }
 
+// Improved Rich Text Renderer for AI Output
+const MarkdownRenderer = ({ content }: { content: string }) => {
+    if (!content) return null;
+
+    // Split by newlines but keep them for processing
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+
+    return (
+        <div className="space-y-2 text-slate-200">
+            {lines.map((line, index) => {
+                // Handle headers/bold lines (often starting with ** or just bold text)
+                const isHeader = line.trim().startsWith('**') && line.trim().endsWith('**');
+
+                // Handle list items
+                const isOrderedList = /^\d+\./.test(line.trim());
+                const isUnorderedList = /^-/.test(line.trim());
+
+                // Parse bold text within the line: **text**
+                const parts = line.split(/(\*\*.*?\*\*)/g);
+
+                const renderedLine = parts.map((part, i) => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        return <strong key={i} className="font-bold text-white">{part.slice(2, -2)}</strong>;
+                    }
+                    return part;
+                });
+
+                // Unordered List (- item): Show Dot, Remove Hyphen
+                if (isUnorderedList) {
+                    // Remove the leading hyphen and space from the first text part if it exists
+                    const cleanRenderedLine = renderedLine.map((part, i) => {
+                        if (i === 0 && typeof part === 'string') {
+                            return part.replace(/^-+\s*/, '');
+                        }
+                        return part;
+                    });
+
+                    return (
+                        <div key={index} className="flex gap-2 items-start pl-1">
+                            <span className="text-cyan-400 mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
+                            <p className="flex-1 leading-relaxed text-slate-200">{cleanRenderedLine}</p>
+                        </div>
+                    );
+                }
+
+                // Ordered List (1. item): No Dot, Keep Number
+                if (isOrderedList) {
+                    return (
+                        <div key={index} className="pl-1">
+                            <p className="leading-relaxed text-slate-200">{renderedLine}</p>
+                        </div>
+                    );
+                }
+
+                return (
+                    <p key={index} className={`leading-relaxed ${isHeader ? 'font-semibold text-white' : ''}`}>
+                        {renderedLine}
+                    </p>
+                );
+            })}
+        </div>
+    );
+};
 const exampleDescriptions = [
     "मेरे हाथ पर कट लग गया है और खून बह रहा है",
     "मेरी त्वचा पर लाल चकत्ते हो गए हैं",
@@ -34,6 +100,7 @@ const exampleDescriptions = [
 ];
 
 export default function HindiHealthAnalysisPage() {
+    const [userUid, setUserUid] = useState<string | null>(null);
     const [image, setImage] = useState<string | null>(null);
     const [description, setDescription] = useState("");
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -45,72 +112,19 @@ export default function HindiHealthAnalysisPage() {
     const streamRef = useRef<MediaStream | null>(null);
     const [showCamera, setShowCamera] = useState(false);
     const [validationError, setValidationError] = useState<{ needsImage: boolean; needsDescription: boolean } | null>(null);
+    const [showComingSoon, setShowComingSoon] = useState(false);
 
     useEffect(() => {
+        if (typeof window !== "undefined") {
+            setUserUid(sessionStorage.getItem("studentId"));
+        }
         return () => {
             if (streamRef.current) {
                 streamRef.current.getTracks().forEach((t) => t.stop());
+                streamRef.current = null;
             }
         };
     }, []);
-
-    function analyzeInput() {
-        // Simulate AI analysis
-        const hasImage = !!image;
-        const desc = description.toLowerCase();
-
-        // Detect category
-        let category: Category = "Other";
-        if (desc.includes("cut") || desc.includes("wound") || desc.includes("कट") || desc.includes("घाव")) category = "Cut";
-        else if (desc.includes("rash") || desc.includes("red patches") || desc.includes("चकत्ते")) category = "Rash";
-        else if (desc.includes("burn") || desc.includes("जल")) category = "Burn";
-        else if (desc.includes("swelling") || desc.includes("swollen") || desc.includes("सूजन")) category = "Swelling";
-        else if (desc.includes("sprain") || desc.includes("मोच")) category = "Sprain";
-        else if (desc.includes("fever") || desc.includes("बुखार")) category = "Fever";
-        else if (hasImage) category = "Cut"; // Default for images
-
-        // Detect severity and urgency
-        const urgentKeywords = ["severe", "excessive", "deep", "fracture", "broken", "unconscious", "गंभीर", "तेज", "बेहोश"];
-        const isUrgent = urgentKeywords.some((keyword) => desc.includes(keyword)) || category === "Burn";
-
-        const severity: SeverityLevel = isUrgent ? "High" : desc.includes("mild") || desc.includes("हल्का") ? "Low" : "Moderate";
-
-        // Suggested items
-        const suggestedItems: string[] = [];
-        if (category === "Cut") {
-            suggestedItems.push("Bandage", "Antiseptic", "Cotton");
-        } else if (category === "Burn") {
-            suggestedItems.push("Burn Gel", "Bandage", "Pain Relief");
-        } else if (category === "Fever") {
-            suggestedItems.push("Fever Tablet", "ORS", "Thermometer");
-        } else if (category === "Sprain") {
-            suggestedItems.push("Cold Pack", "Bandage", "Pain Relief");
-        } else {
-            suggestedItems.push("Antiseptic", "Bandage");
-        }
-
-        const suggestion: AISuggestion = {
-            category,
-            confidence: hasImage ? 85 : 65,
-            severity,
-            needsDoctor: isUrgent || severity === "High",
-            suggestedItems,
-        };
-
-        setSuggestions(suggestion);
-        setShowUrgentAlert(isUrgent || severity === "High");
-    }
-
-    useEffect(() => {
-        // Simulate AI analysis when image or description changes
-        if (image || description.length > 10) {
-            analyzeInput();
-        } else {
-            setSuggestions(null);
-            setShowUrgentAlert(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [image, description]);
 
     function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -127,7 +141,13 @@ export default function HindiHealthAnalysisPage() {
     function handleCaptureClick() {
         setShowCamera(true);
         navigator.mediaDevices
-            .getUserMedia({ video: { facingMode: "environment" } })
+            .getUserMedia({
+                video: {
+                    facingMode: "environment",
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            })
             .then((stream) => {
                 streamRef.current = stream;
                 if (videoRef.current) {
@@ -150,7 +170,7 @@ export default function HindiHealthAnalysisPage() {
             const ctx = canvas.getContext("2d");
             if (ctx) {
                 ctx.drawImage(videoRef.current, 0, 0);
-                const dataUrl = canvas.toDataURL("image/jpeg");
+                const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
                 setImage(dataUrl);
                 setImagePreview(dataUrl);
                 closeCamera();
@@ -161,6 +181,7 @@ export default function HindiHealthAnalysisPage() {
     function closeCamera() {
         if (streamRef.current) {
             streamRef.current.getTracks().forEach((t) => t.stop());
+            streamRef.current = null;
         }
         setShowCamera(false);
     }
@@ -170,7 +191,7 @@ export default function HindiHealthAnalysisPage() {
         setImagePreview(null);
     }
 
-    function handleAnalyze() {
+    async function handleAnalyze() {
         const missingImage = !image;
         const missingDescription = description.length < 10;
 
@@ -184,12 +205,41 @@ export default function HindiHealthAnalysisPage() {
         }
 
         setIsAnalyzing(true);
-        // Simulate analysis
-        setTimeout(() => {
+        setSuggestions(null);
+        setShowUrgentAlert(false);
+
+        try {
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 2500));
+
+            // Mock Result
+            const result = {
+                diagnosis: "**नकली निदान**: विवरण/फोटो के आधार पर, यह एक छोटी चोट प्रतीत होती है।",
+                medication: "**उपचार के चरण:**\n1. एंटीसेप्टिक वाइप्स से क्षेत्र को साफ करें।\n2. एंटीबायोटिक मलहम लगाएं।\n3. एक बाँझ पट्टी के साथ कवर करें।",
+                prevention: "क्षेत्र को साफ और सूखा रखें। संक्रमण के संकेतों जैसे बढ़ी हुई लालिमा या सूजन के लिए देखें।",
+                vendingitems: "पट्टियाँ, एंटीसेप्टिक वाइप्स",
+                raw: "Raw mock data"
+            };
+
+            setSuggestions({
+                diagnosis: result.diagnosis,
+                medication: result.medication,
+                prevention: result.prevention,
+                vendingitems: result.vendingitems || "",
+                raw: result.raw
+            });
+
+            // Simple urgency check based on keywords in diagnosis (checking both English and Hindi keywords just in case)
+            const urgentKeywords = ["severe", "emergency", "doctor", "hospital", "immediate attention", "गंभीर", "डॉक्टर", "अस्पताल", "तुरंत"];
+            const isUrgent = urgentKeywords.some(k => result.diagnosis?.toLowerCase().includes(k) || result.medication?.toLowerCase().includes(k));
+            setShowUrgentAlert(isUrgent);
+
+        } catch (error) {
+            console.error("Analysis error:", error);
+            alert("एक त्रुटि हुई। कृपया पुनः प्रयास करें।");
+        } finally {
             setIsAnalyzing(false);
-            // Navigate to results page or show results
-            console.log("Analysis complete", suggestions);
-        }, 3000);
+        }
     }
 
     function insertExample(exampleText: string) {
@@ -293,6 +343,68 @@ export default function HindiHealthAnalysisPage() {
                 )}
             </AnimatePresence>
 
+            {/* Coming Soon Modal */}
+            <AnimatePresence>
+                {showComingSoon && (
+                    <motion.div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowComingSoon(false)}
+                    >
+                        <motion.div
+                            className="frosted-card max-w-sm w-full rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-slate-900/95 to-slate-800/95 p-8 shadow-2xl"
+                            initial={{ scale: 0.8, y: 30, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.8, y: 30, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="mb-6 text-center">
+                                <motion.div
+                                    className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 ring-4 ring-emerald-500/30"
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.1, type: "spring", damping: 15 }}
+                                >
+                                    <Rocket className="h-8 w-8 text-emerald-400" />
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-white">
+                                    जल्द आ रहा है!
+                                </h3>
+                                {suggestions?.vendingitems ? (
+                                    <div className="mt-4 text-left">
+                                        <p className="text-sm text-slate-400 mb-2">आपके लिए निम्नलिखित वस्तुओं की पहचान की गई है:</p>
+                                        <div className="rounded-xl bg-emerald-500/10 p-3 border border-emerald-500/20 max-h-40 overflow-y-auto">
+                                            <MarkdownRenderer content={suggestions.vendingitems} />
+                                        </div>
+                                        <p className="mt-3 text-xs text-slate-500 text-center">हम इन वस्तुओं को स्वचालित रूप से निकालने के लिए वेंडिंग मशीन को जोड़ रहे हैं।</p>
+                                    </div>
+                                ) : (
+                                    <p className="mt-2 text-sm text-slate-400">
+                                        वेंडिंग मशीन खरीद सुविधा जल्द आ रही है!
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <motion.button
+                                    onClick={() => setShowComingSoon(false)}
+                                    className="flex-1 rounded-full border-2 border-emerald-500/30 bg-emerald-500/10 px-6 py-3 font-semibold text-emerald-300 transition hover:border-emerald-500/50 hover:bg-emerald-500/20"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    ठीक है
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className="relative z-10 mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
                 {/* Header */}
                 <motion.header
@@ -390,7 +502,7 @@ export default function HindiHealthAnalysisPage() {
                                 <img
                                     src={imagePreview}
                                     alt="Uploaded"
-                                    className="w-full rounded-2xl border border-white/20"
+                                    className="w-full max-h-[500px] object-contain rounded-2xl border border-white/20 bg-black/20"
                                 />
                                 <button
                                     onClick={removeImage}
@@ -528,9 +640,93 @@ export default function HindiHealthAnalysisPage() {
                     </motion.div>
                 )}
 
+                {/* Results Section */}
+                <AnimatePresence>
+                    {suggestions && (
+                        <motion.div
+                            className="space-y-6"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                        >
+                            <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500">
+                                        <Activity className="h-6 w-6 text-white" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-white">विश्लेषण परिणाम</h2>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* Diagnosis */}
+                                    <div className="rounded-2xl bg-white/5 p-5">
+                                        <h3 className="mb-2 text-lg font-semibold text-cyan-300">निदान</h3>
+                                        <MarkdownRenderer content={suggestions.diagnosis} />
+                                    </div>
+
+                                    {/* Medication / First Aid */}
+                                    <div className="rounded-2xl bg-white/5 p-5">
+                                        <div className="mb-2 flex items-center gap-2">
+                                            <Pill className="h-5 w-5 text-emerald-400" />
+                                            <h3 className="text-lg font-semibold text-emerald-300">दवा और प्राथमिक उपचार</h3>
+                                        </div>
+                                        <MarkdownRenderer content={suggestions.medication} />
+                                    </div>
+
+                                    {/* Prevention */}
+                                    <div className="rounded-2xl bg-white/5 p-5">
+                                        <div className="mb-2 flex items-center gap-2">
+                                            <Shield className="h-5 w-5 text-amber-400" />
+                                            <h3 className="text-lg font-semibold text-amber-300">रोकथाम</h3>
+                                        </div>
+                                        <MarkdownRenderer content={suggestions.prevention} />
+                                    </div>
+
+                                    {/* Vending Items */}
+                                    {suggestions.vendingitems && suggestions.vendingitems.trim() && (
+                                        <div className="rounded-2xl bg-white/5 p-5">
+                                            <div className="mb-4 flex items-center gap-2">
+                                                <ShoppingBag className="h-5 w-5 text-pink-400" />
+                                                <h3 className="text-lg font-semibold text-pink-300">वेंडिंग मशीन में उपलब्ध</h3>
+                                            </div>
+                                            <MarkdownRenderer content={suggestions.vendingitems} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                                    <motion.button
+                                        onClick={() => setShowComingSoon(true)}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-4 font-semibold text-white shadow-lg transition hover:shadow-xl"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <CreditCard className="h-5 w-5" />
+                                        वेंडिंग मशीन से खरीदें
+                                    </motion.button>
+
+                                    <motion.button
+                                        onClick={() => {
+                                            // Generate receipt
+                                            window.print();
+                                        }}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-cyan-400/50 bg-cyan-400/10 px-6 py-4 font-semibold text-cyan-300 transition hover:border-cyan-400 hover:bg-cyan-400/20"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <FileText className="h-5 w-5" />
+                                        रसीद प्राप्त करें
+                                    </motion.button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Privacy Note */}
                 <motion.footer
-                    className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-400"
+                    className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-400"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5, delay: 0.3 }}

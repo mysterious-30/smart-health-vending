@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import {
+import { getUserCookie } from "@/utils/cookies";
 
+import {
     Bot,
     Camera,
     Fingerprint,
@@ -25,6 +26,7 @@ import {
 
 export default function HindiHome() {
     const router = useRouter();
+
     const [isNavigating, setIsNavigating] = useState(false);
     const [isLanguageSwitching, setIsLanguageSwitching] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -33,6 +35,9 @@ export default function HindiHome() {
     const [showSafety, setShowSafety] = useState(false);
     const [showContact, setShowContact] = useState(false);
     const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+    const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+    const [contactSubmitted, setContactSubmitted] = useState(false);
+    const [contactError, setContactError] = useState("");
 
     const essentials = [
         "बैंडेज और ड्रेसिंग",
@@ -81,7 +86,16 @@ export default function HindiHome() {
     const handleGetStarted = () => {
         if (isNavigating) return;
         setIsNavigating(true);
-        setTimeout(() => router.push("/hi/auth"), 350);
+
+        // Check if user is already authenticated via cookie
+        const userProfile = getUserCookie();
+        if (userProfile) {
+            // User is authenticated, go directly to dashboard
+            setTimeout(() => router.push("/hi/dashboard"), 350);
+        } else {
+            // User needs to authenticate
+            setTimeout(() => router.push("/hi/auth"), 350);
+        }
     };
 
     function nextStep() {
@@ -100,11 +114,6 @@ export default function HindiHome() {
         setShowPreview(false);
         setCurrentStep(0);
     }
-
-    const toggleLanguage = () => {
-        setIsLanguageSwitching(true);
-        setTimeout(() => router.push("/en"), 350);
-    };
 
     return (
         <section
@@ -133,6 +142,7 @@ export default function HindiHome() {
                 }}
             >
                 <header className="flex items-center justify-between gap-4">
+
                     <div className="flex items-center gap-4">
                         <Image
                             src="/curegenie-logo.png"
@@ -148,16 +158,20 @@ export default function HindiHome() {
                         </div>
                     </div>
 
-                    <motion.button
-                        onClick={toggleLanguage}
+                    <button
+                        onClick={() => {
+                            console.log("English button clicked");
+                            setIsLanguageSwitching(true);
+                            setTimeout(() => {
+                                window.location.href = "/en";
+                            }, 350);
+                        }}
                         disabled={isLanguageSwitching}
                         className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                        whileHover={!isLanguageSwitching ? { scale: 1.05 } : {}}
-                        whileTap={!isLanguageSwitching ? { scale: 0.95 } : {}}
                     >
                         <Globe className="h-4 w-4" />
                         <span>English</span>
-                    </motion.button>
+                    </button>
                 </header>
 
                 <div className={`mt-12 space-y-8 transition-all duration-500 ${isNavigating || isLanguageSwitching ? "translate-y-4 opacity-50" : "opacity-100"}`}>
@@ -275,7 +289,7 @@ export default function HindiHome() {
                             className="fixed left-1/2 top-1/2 z-50 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/20 bg-slate-900 p-6 shadow-2xl sm:p-8"
                             initial={{ opacity: 0, scale: 0.9, y: -20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                            exit={{ opacity: 0, scale: 1, y: 0 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -693,50 +707,97 @@ export default function HindiHome() {
 
                                 <div className="rounded-xl border border-white/10 bg-white/5 p-6">
                                     <h3 className="mb-4 text-lg font-semibold text-white">फीडबैक भेजें</h3>
-                                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("आपकी प्रतिक्रिया के लिए धन्यवाद! हम जल्द ही आपसे संपर्क करेंगे।"); setShowContact(false); }}>
-                                        <div>
-                                            <label className="mb-2 block text-sm font-medium text-slate-300">नाम</label>
-                                            <input
-                                                type="text"
-                                                value={contactForm.name}
-                                                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                                                className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
-                                                placeholder="आपका नाम"
-                                                required
-                                            />
+                                    {contactSubmitted ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                                                <CheckCircle2 className="h-8 w-8" />
+                                            </div>
+                                            <h4 className="mb-2 text-xl font-semibold text-white">संदेश भेजा गया!</h4>
+                                            <p className="mb-6 text-slate-300">
+                                                आपकी प्रतिक्रिया के लिए धन्यवाद। हम जल्द ही आपसे संपर्क करेंगे।
+                                            </p>
+                                            <motion.button
+                                                onClick={() => {
+                                                    setShowContact(false);
+                                                    setContactSubmitted(false);
+                                                    setContactForm({ name: "", email: "", message: "" });
+                                                }}
+                                                className="rounded-full bg-white/10 px-6 py-2 font-medium text-white transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                बंद करें
+                                            </motion.button>
                                         </div>
-                                        <div>
-                                            <label className="mb-2 block text-sm font-medium text-slate-300">ईमेल</label>
-                                            <input
-                                                type="email"
-                                                value={contactForm.email}
-                                                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                                className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
-                                                placeholder="your.email@example.com"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="mb-2 block text-sm font-medium text-slate-300">संदेश</label>
-                                            <textarea
-                                                value={contactForm.message}
-                                                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                                className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
-                                                placeholder="हम आपकी कैसे मदद कर सकते हैं?"
-                                                rows={4}
-                                                required
-                                            />
-                                        </div>
-                                        <motion.button
-                                            type="submit"
-                                            className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 px-6 py-3 font-semibold text-white shadow-lg"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                        >
-                                            <Send className="h-4 w-4" />
-                                            संदेश भेजें
-                                        </motion.button>
-                                    </form>
+                                    ) : (
+                                        <form className="space-y-4" onSubmit={async (e) => {
+                                            e.preventDefault();
+                                            setIsSubmittingContact(true);
+                                            setContactError("");
+                                            try {
+                                                // Simulate network delay
+                                                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                                                // Mock success
+                                                setContactSubmitted(true);
+                                            } catch (err) {
+                                                console.error("Contact form error:", err);
+                                                setContactError("संदेश भेजने में विफल। कृपया पुन: प्रयास करें।");
+                                            } finally {
+                                                setIsSubmittingContact(false);
+                                            }
+                                        }}>
+                                            <div>
+                                                <label className="mb-2 block text-sm font-medium text-slate-300">नाम</label>
+                                                <input
+                                                    type="text"
+                                                    value={contactForm.name}
+                                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                                                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
+                                                    placeholder="आपका नाम"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="mb-2 block text-sm font-medium text-slate-300">ईमेल</label>
+                                                <input
+                                                    type="email"
+                                                    value={contactForm.email}
+                                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
+                                                    placeholder="your.email@example.com"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="mb-2 block text-sm font-medium text-slate-300">संदेश</label>
+                                                <textarea
+                                                    value={contactForm.message}
+                                                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
+                                                    placeholder="हम आपकी कैसे मदद कर सकते हैं?"
+                                                    rows={4}
+                                                    required
+                                                />
+                                            </div>
+                                            {contactError && (
+                                                <div className="text-red-400 text-sm flex items-center gap-2">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                    {contactError}
+                                                </div>
+                                            )}
+                                            <motion.button
+                                                type="submit"
+                                                disabled={isSubmittingContact}
+                                                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 px-6 py-3 font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={!isSubmittingContact ? { scale: 1.02 } : {}}
+                                                whileTap={!isSubmittingContact ? { scale: 0.98 } : {}}
+                                            >
+                                                <Send className="h-4 w-4" />
+                                                {isSubmittingContact ? "भेजा जा रहा है..." : "संदेश भेजें"}
+                                            </motion.button>
+                                        </form>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
