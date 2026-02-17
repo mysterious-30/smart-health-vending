@@ -1,0 +1,21 @@
+{
+  "name": "CureGenie - Smart Health Vending",
+  "short_name": "CureGenie",
+  "description": "Smart Health Assistance Vending Machine with AI Analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f0c",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/curegenie-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/curegenie-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
