@@ -29,9 +29,13 @@ import {
   Globe
 } from "lucide-react";
 
+import { useToast } from "@/context/ToastContext";
+import ConfirmationModal from "@/components/ConfirmationModal";
+
 export default function SettingsPage() {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
+  const { showToast } = useToast();
   const hasFetchedProfile = useRef(false);
 
   const [profile, setProfile] = useState<{
@@ -56,6 +60,7 @@ export default function SettingsPage() {
   const [emailReceipts, setEmailReceipts] = useState(true);
   const [monthlySummary, setMonthlySummary] = useState(false);
   const [emergencyAlerts, setEmergencyAlerts] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -121,7 +126,7 @@ export default function SettingsPage() {
 
     // Validate age
     if (editedProfile.age && (isNaN(Number(editedProfile.age)) || Number(editedProfile.age) < 1)) {
-      alert("Please enter a valid age");
+      showToast("Please enter a valid age", "error");
       return;
     }
 
@@ -154,27 +159,24 @@ export default function SettingsPage() {
       });
 
       setIsEditing(false);
-      setSuccessMessage("Profile updated successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      showToast("Profile updated successfully", "success");
 
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("An error occurred while updating your profile");
+      showToast("An error occurred while updating your profile", "error");
     } finally {
       setIsSaving(false);
     }
   }
 
   function handleLogout() {
-    if (confirm("Are you sure you want to log out?")) {
-      // Clear user cookie
-      clearUserCookie();
+    setShowLogoutConfirm(true);
+  }
 
-      // Clear session
-      sessionStorage.clear();
-      // Navigate to home or auth page
-      window.location.href = "/";
-    }
+  function confirmLogout() {
+    clearUserCookie();
+    sessionStorage.clear();
+    window.location.href = "/";
   }
 
   return (
@@ -637,7 +639,7 @@ export default function SettingsPage() {
               <div>
                 <h2 className="text-xl font-semibold text-white">🔄 {"Logout Section"}</h2>
                 <p className="text-sm text-slate-400">
-                  {"For security, you&apos;re auto-logged out after inactivity."}
+                  {"For security, you're auto-logged out after inactivity."}
                 </p>
               </div>
             </div>
@@ -656,6 +658,17 @@ export default function SettingsPage() {
           </div>
         </motion.section>
       </div>
+
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        title="Log Out?"
+        message="Are you sure you want to log out? You will need to sign in again to access your profile."
+        confirmText="Log Out"
+        cancelText="Cancel"
+        isDestructive={true}
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </div>
   );
 }

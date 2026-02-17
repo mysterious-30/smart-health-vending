@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
     ShoppingCart,
     Plus,
@@ -12,6 +13,7 @@ import {
     AlertCircle,
     Package,
     TrendingUp,
+    CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -102,10 +104,16 @@ const bundles = [
 ];
 
 export default function HindiQuickBuyPage() {
+    const prefersReducedMotion = useReducedMotion();
+
     const [cart, setCart] = useState<CartItem[]>([]);
     const [showCart, setShowCart] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "Cash" | null>(null);
     const [showCheckout, setShowCheckout] = useState(false);
+    const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+    const [orderId, setOrderId] = useState<string>("");
+    const [orderTotal, setOrderTotal] = useState<number>(0);
+    const [orderPaymentMethod, setOrderPaymentMethod] = useState<string>("");
 
     function addToCart(product: Product) {
         if (product.stock === 0) return;
@@ -156,6 +164,22 @@ export default function HindiQuickBuyPage() {
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+    function generateOrderId(): string {
+        return `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    }
+
+    function completePurchase() {
+        const newOrderId = generateOrderId();
+        setOrderId(newOrderId);
+        setOrderTotal(total);
+        setOrderPaymentMethod(paymentMethod || "");
+        setShowOrderConfirmation(true);
+        setCart([]);
+        setShowCart(false);
+        setShowCheckout(false);
+        setPaymentMethod(null);
+    }
+
     function getStockStatus(product: Product): string {
         if (product.stockStatus) return product.stockStatus;
         if (product.stock <= 3) return `केवल ${product.stock} बचे हैं`;
@@ -178,9 +202,9 @@ export default function HindiQuickBuyPage() {
                 {/* Header */}
                 <motion.header
                     className="mb-8"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5 }}
                 >
                     <div className="mb-4 flex items-center justify-between">
                         <Link
@@ -217,12 +241,11 @@ export default function HindiQuickBuyPage() {
                     </div>
                 </motion.header>
 
-                {/* Recommended Section */}
                 <motion.section
                     className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.1 }}
                 >
                     <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
                         <div className="mb-6 flex items-center gap-3">
@@ -253,15 +276,40 @@ export default function HindiQuickBuyPage() {
                                             {getStockStatus(product)}
                                         </span>
                                     </div>
-                                    <motion.button
-                                        onClick={() => addToCart(product)}
-                                        disabled={product.stock === 0}
-                                        className="w-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                        whileHover={product.stock > 0 ? { scale: 1.05 } : {}}
-                                        whileTap={product.stock > 0 ? { scale: 0.95 } : {}}
-                                    >
-                                        जोड़ें
-                                    </motion.button>
+                                    {cart.find((item) => item.id === product.id) ? (
+                                        <div className="flex items-center justify-center gap-3 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-4 py-2">
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, -1)}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Minus className="h-4 w-4" />
+                                            </motion.button>
+                                            <span className="min-w-[2rem] text-center text-sm font-bold text-white">
+                                                {cart.find((item) => item.id === product.id)?.quantity || 0}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, 1)}
+                                                disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </motion.button>
+                                        </div>
+                                    ) : (
+                                        <motion.button
+                                            onClick={() => addToCart(product)}
+                                            disabled={product.stock === 0}
+                                            className="w-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                            whileHover={product.stock > 0 ? { scale: 1.05 } : {}}
+                                            whileTap={product.stock > 0 ? { scale: 0.95 } : {}}
+                                        >
+                                            जोड़ें
+                                        </motion.button>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -271,9 +319,9 @@ export default function HindiQuickBuyPage() {
                 {/* Wound & Injury Care */}
                 <motion.section
                     className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.2 }}
                 >
                     <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
                         <div className="mb-6 flex items-center gap-3">
@@ -288,7 +336,7 @@ export default function HindiQuickBuyPage() {
                                 <motion.div
                                     key={product.id}
                                     className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-cyan-300/50"
-                                    whileHover={{ y: -2 }}
+                                    whileHover={prefersReducedMotion ? {} : { y: -2 }}
                                 >
                                     <div className="flex-1">
                                         <h3 className="font-medium text-white">{product.name}</h3>
@@ -299,15 +347,40 @@ export default function HindiQuickBuyPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <motion.button
-                                        onClick={() => addToCart(product)}
-                                        disabled={product.stock === 0}
-                                        className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                                        whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                                        whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                    </motion.button>
+                                    {cart.find((item) => item.id === product.id) ? (
+                                        <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, -1)}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Minus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                            <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                                                {cart.find((item) => item.id === product.id)?.quantity || 0}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, 1)}
+                                                disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                        </div>
+                                    ) : (
+                                        <motion.button
+                                            onClick={() => addToCart(product)}
+                                            disabled={product.stock === 0}
+                                            className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                                            whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                                            whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </motion.button>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -317,9 +390,9 @@ export default function HindiQuickBuyPage() {
                 {/* Fever & Pain Relief */}
                 <motion.section
                     className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.3 }}
                 >
                     <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
                         <div className="mb-6 flex items-center gap-3">
@@ -341,7 +414,7 @@ export default function HindiQuickBuyPage() {
                                 <motion.div
                                     key={product.id}
                                     className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-cyan-300/50"
-                                    whileHover={{ y: -2 }}
+                                    whileHover={prefersReducedMotion ? {} : { y: -2 }}
                                 >
                                     <div className="flex-1">
                                         <h3 className="font-medium text-white">{product.name}</h3>
@@ -352,15 +425,40 @@ export default function HindiQuickBuyPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <motion.button
-                                        onClick={() => addToCart(product)}
-                                        disabled={product.stock === 0}
-                                        className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                                        whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                                        whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                    </motion.button>
+                                    {cart.find((item) => item.id === product.id) ? (
+                                        <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, -1)}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Minus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                            <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                                                {cart.find((item) => item.id === product.id)?.quantity || 0}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, 1)}
+                                                disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                        </div>
+                                    ) : (
+                                        <motion.button
+                                            onClick={() => addToCart(product)}
+                                            disabled={product.stock === 0}
+                                            className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                                            whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                                            whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </motion.button>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -370,9 +468,9 @@ export default function HindiQuickBuyPage() {
                 {/* Hygiene & Daily Essentials */}
                 <motion.section
                     className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.4 }}
                 >
                     <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
                         <div className="mb-6 flex items-center gap-3">
@@ -387,7 +485,7 @@ export default function HindiQuickBuyPage() {
                                 <motion.div
                                     key={product.id}
                                     className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-cyan-300/50"
-                                    whileHover={{ y: -2 }}
+                                    whileHover={prefersReducedMotion ? {} : { y: -2 }}
                                 >
                                     <div className="flex-1">
                                         <h3 className="font-medium text-white">{product.name}</h3>
@@ -398,15 +496,40 @@ export default function HindiQuickBuyPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <motion.button
-                                        onClick={() => addToCart(product)}
-                                        disabled={product.stock === 0}
-                                        className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                                        whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                                        whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                    </motion.button>
+                                    {cart.find((item) => item.id === product.id) ? (
+                                        <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, -1)}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Minus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                            <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                                                {cart.find((item) => item.id === product.id)?.quantity || 0}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, 1)}
+                                                disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                        </div>
+                                    ) : (
+                                        <motion.button
+                                            onClick={() => addToCart(product)}
+                                            disabled={product.stock === 0}
+                                            className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                                            whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                                            whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </motion.button>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -416,9 +539,9 @@ export default function HindiQuickBuyPage() {
                 {/* Seasonal Extras */}
                 <motion.section
                     className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.5 }}
                 >
                     <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
                         <div className="mb-6 flex items-center gap-3">
@@ -436,7 +559,7 @@ export default function HindiQuickBuyPage() {
                                 <motion.div
                                     key={product.id}
                                     className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-cyan-300/50"
-                                    whileHover={{ y: -2 }}
+                                    whileHover={prefersReducedMotion ? {} : { y: -2 }}
                                 >
                                     <div className="flex-1">
                                         <h3 className="font-medium text-white">{product.name}</h3>
@@ -447,15 +570,40 @@ export default function HindiQuickBuyPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <motion.button
-                                        onClick={() => addToCart(product)}
-                                        disabled={product.stock === 0}
-                                        className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                                        whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
-                                        whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                    </motion.button>
+                                    {cart.find((item) => item.id === product.id) ? (
+                                        <div className="ml-4 flex items-center gap-2 rounded-full border-2 border-cyan-400 bg-cyan-400/10 px-3 py-1.5">
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, -1)}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Minus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                            <span className="min-w-[1.5rem] text-center text-sm font-bold text-white">
+                                                {cart.find((item) => item.id === product.id)?.quantity || 0}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => updateQuantity(product.id, 1)}
+                                                disabled={cart.find((item) => item.id === product.id)!.quantity >= product.stock}
+                                                className="rounded-full bg-white/10 p-1 text-cyan-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                            </motion.button>
+                                        </div>
+                                    ) : (
+                                        <motion.button
+                                            onClick={() => addToCart(product)}
+                                            disabled={product.stock === 0}
+                                            className="ml-4 rounded-full bg-cyan-400/20 p-2 text-cyan-400 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                                            whileHover={product.stock > 0 ? { scale: 1.1 } : {}}
+                                            whileTap={product.stock > 0 ? { scale: 0.9 } : {}}
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </motion.button>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -465,9 +613,9 @@ export default function HindiQuickBuyPage() {
                 {/* Bundles & Combos */}
                 <motion.section
                     className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.6 }}
                 >
                     <div className="frosted-card rounded-3xl border border-white/10 p-6 sm:p-8">
                         <div className="mb-6 flex items-center gap-3">
@@ -482,7 +630,7 @@ export default function HindiQuickBuyPage() {
                                 <motion.div
                                     key={bundle.id}
                                     className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-6 transition hover:border-cyan-300/50"
-                                    whileHover={{ y: -4 }}
+                                    whileHover={prefersReducedMotion ? {} : { y: -4 }}
                                 >
                                     <h3 className="mb-2 text-lg font-semibold text-white">{bundle.name}</h3>
                                     <p className="mb-3 text-sm text-slate-400">{bundle.description}</p>
@@ -499,14 +647,39 @@ export default function HindiQuickBuyPage() {
                                             ₹{bundle.originalPrice}
                                         </span>
                                     </div>
-                                    <motion.button
-                                        onClick={() => addBundleToCart(bundle)}
-                                        className="w-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 px-4 py-2 font-semibold text-white"
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                    >
-                                        कॉम्बो खरीदें
-                                    </motion.button>
+                                    {cart.find((item) => item.id === bundle.id) ? (
+                                        <div className="flex items-center justify-center gap-3 rounded-full border-2 border-purple-400 bg-purple-400/10 px-4 py-2">
+                                            <motion.button
+                                                onClick={() => updateQuantity(bundle.id, -1)}
+                                                className="rounded-full bg-white/10 p-1 text-purple-400 transition hover:bg-white/20"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Minus className="h-4 w-4" />
+                                            </motion.button>
+                                            <span className="min-w-[2rem] text-center text-sm font-bold text-white">
+                                                {cart.find((item) => item.id === bundle.id)?.quantity || 0}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => updateQuantity(bundle.id, 1)}
+                                                disabled={cart.find((item) => item.id === bundle.id)!.quantity >= bundle.stock}
+                                                className="rounded-full bg-white/10 p-1 text-purple-400 transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </motion.button>
+                                        </div>
+                                    ) : (
+                                        <motion.button
+                                            onClick={() => addBundleToCart(bundle)}
+                                            className="w-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 px-4 py-2 font-semibold text-white"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            कॉम्बो खरीदें
+                                        </motion.button>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -516,9 +689,9 @@ export default function HindiQuickBuyPage() {
                 {/* Footer Notes */}
                 <motion.footer
                     className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-400"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.7 }}
+                    initial={prefersReducedMotion ? {} : { opacity: 0 }}
+                    animate={prefersReducedMotion ? {} : { opacity: 1 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.7 }}
                 >
                     <div className="space-y-2">
                         <p>• सभी कीमतें कर सहित हैं।</p>
@@ -647,13 +820,7 @@ export default function HindiQuickBuyPage() {
 
                                                 {paymentMethod && (
                                                     <motion.button
-                                                        onClick={() => {
-                                                            alert(`₹${total} का भुगतान ${paymentMethod} द्वारा सफल रहा!`);
-                                                            setCart([]);
-                                                            setShowCart(false);
-                                                            setShowCheckout(false);
-                                                            setPaymentMethod(null);
-                                                        }}
+                                                        onClick={completePurchase}
                                                         className="w-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 px-6 py-3 font-semibold text-white shadow-lg"
                                                         initial={{ opacity: 0, y: 10 }}
                                                         animate={{ opacity: 1, y: 0 }}
@@ -668,6 +835,69 @@ export default function HindiQuickBuyPage() {
                                     </div>
                                 </>
                             )}
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Order Confirmation Modal */}
+            <AnimatePresence>
+                {showOrderConfirmation && (
+                    <>
+                        <motion.div
+                            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowOrderConfirmation(false)}
+                        />
+                        <motion.div
+                            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border-2 border-green-500/40 bg-gradient-to-br from-slate-900/95 to-slate-800/95 p-8 shadow-2xl"
+                            initial={{ scale: 0.8, y: 30, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.8, y: 30, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <motion.div
+                                className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 ring-4 ring-green-500/30"
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: 0.2, type: "spring", damping: 15 }}
+                            >
+                                <CheckCircle2 className="h-10 w-10 text-green-400" />
+                            </motion.div>
+                            <h2 className="mb-2 text-center text-2xl font-bold text-white">ऑर्डर कन्फर्म!</h2>
+                            <p className="mb-6 text-center text-sm text-slate-400">आपकी खरीदारी सफलतापूर्वक पूरी हो गई।</p>
+                            <div className="mb-6 space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-slate-400">ऑर्डर आईडी:</span>
+                                    <span className="font-mono text-sm font-semibold text-cyan-400">{orderId}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-slate-400">भुगतान का तरीका:</span>
+                                    <span className="text-sm font-semibold text-white">
+                                        {orderPaymentMethod === "UPI" ? "UPI (GPay/PhonePe)"
+                                            : orderPaymentMethod === "Card" ? "कार्ड (Debit/Credit)"
+                                                : "नकद"}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between border-t border-white/10 pt-3">
+                                    <span className="text-base font-semibold text-white">कुल भुगतान:</span>
+                                    <span className="text-xl font-bold text-green-400">₹{orderTotal}</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <motion.button
+                                    onClick={() => setShowOrderConfirmation(false)}
+                                    className="flex-1 rounded-full border-2 border-green-500/30 bg-green-500/10 px-6 py-3 font-semibold text-green-300 transition hover:border-green-500/50 hover:bg-green-500/20"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    हो गया
+                                </motion.button>
+                            </div>
+                            <p className="mt-4 text-center text-xs text-slate-500">कृपया वेंडिंग मशीन से अपना सामान लें।</p>
                         </motion.div>
                     </>
                 )}

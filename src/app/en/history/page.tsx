@@ -19,6 +19,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/context/ToastContext";
 
 
 interface Activity {
@@ -124,7 +125,7 @@ const insights = [
 ];
 
 export default function HistoryPage() {
-
+  const { showToast } = useToast();
   const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
   const [showMoreInsights, setShowMoreInsights] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,7 +136,7 @@ export default function HistoryPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   function handleDownloadReceipt(receiptId: string) {
-    alert(`Downloading receipt: ${receiptId}`);
+    showToast(`Downloading receipt: ${receiptId}`, "info");
   }
 
   function handlePrintReceipt() {
@@ -143,7 +144,7 @@ export default function HistoryPage() {
   }
 
   function handleDownloadHistory() {
-    alert("Downloading your complete history...");
+    showToast("Downloading your complete history...", "info");
   }
 
   const filteredReceipts = receipts.filter((receipt) => {
